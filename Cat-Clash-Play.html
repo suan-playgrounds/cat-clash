@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>물건치기-냥!</title>
+    <style>
+:root {
+  --bg-top: #fff4cf;
+  --bg-bottom: #e98c52;
+  --panel: rgba(255, 250, 239, 0.86);
+  --panel-strong: rgba(255, 247, 231, 0.96);
+  --ink: #2e1f1b;
+  --accent: #ed6d3d;
+  --accent-deep: #bf4720;
+  --blue: #2d6cdf;
+  --shadow: rgba(58, 25, 13, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Trebuchet MS", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 30%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+.hero-panel,
+.game-panel {
+  background: var(--panel);
+  border: 2px solid rgba(126, 64, 34, 0.16);
+  box-shadow: 0 18px 45px var(--shadow);
+  border-radius: 28px;
+  backdrop-filter: blur(10px);
+}
+
+.hero-panel {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 26%),
+    linear-gradient(180deg, rgba(255, 246, 228, 0.98), rgba(255, 232, 193, 0.92));
+}
+
+.eyebrow,
+.label,
+.control-list,
+.status-bar {
+  letter-spacing: 0.02em;
+}
+
+h1,
+h2,
+.value,
+.start-btn,
+.unit-btn {
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "Apple SD Gothic Neo", sans-serif;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(3rem, 5vw, 4.4rem);
+  line-height: 0.95;
+}
+
+.intro {
+  margin: 18px 0 22px;
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.control-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+.start-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  font-size: 1.35rem;
+  color: white;
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(191, 71, 32, 0.26);
+}
+
+.game-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 14px;
+  padding: 18px;
+}
+
+.hud-bar,
+.summon-panel,
+.status-bar {
+  background: var(--panel-strong);
+  border-radius: 22px;
+  padding: 14px 16px;
+}
+
+.hud-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+}
+
+.hud-center,
+.align-right {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.label {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.value {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.canvas-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  min-height: 0;
+  background: linear-gradient(180deg, #9dd8ff 0%, #fbeaca 48%, #d78041 100%);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 14, 14, 0.12);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.overlay.visible {
+  opacity: 1;
+}
+
+.overlay-card {
+  width: min(420px, calc(100% - 40px));
+  background: rgba(255, 250, 241, 0.93);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(34, 22, 18, 0.24);
+}
+
+.overlay-card h2,
+.overlay-card p {
+  margin: 0;
+}
+
+.overlay-card p {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+.summon-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.unit-btn {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  border: 0;
+  border-radius: 20px;
+  padding: 14px 12px;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(255, 241, 213, 0.95), rgba(255, 224, 171, 0.95));
+  cursor: pointer;
+  box-shadow: inset 0 -3px 0 rgba(140, 71, 28, 0.18);
+  min-height: 116px;
+}
+
+.unit-btn strong {
+  font-size: 1.65rem;
+}
+
+.unit-btn small {
+  opacity: 0.72;
+}
+
+.unit-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.upgrade-btn {
+  background: linear-gradient(180deg, rgba(223, 238, 255, 0.98), rgba(180, 214, 255, 0.98));
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+}
+
+.status-bar p {
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .hud-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .hud-center,
+  .align-right {
+    text-align: left;
+  }
+
+  .summon-panel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .control-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-panel">
+        <p class="eyebrow">Cat Object Battle</p>
+        <h1>물건치기-냥!</h1>
+        <p class="intro">
+          물건 군단을 상대로 고양이 부대를 밀어넣는 횡스크롤 라인 전투 게임입니다. 코스트를
+          모아 고양이 유닛을 소환하고, 적 물건 기지를 먼저 부수세요.
+        </p>
+        <div class="control-list">
+          <span><strong>1-0 / A-S-D-F-G</strong> 유닛 소환</span>
+          <span><strong>Q</strong> 수입 강화</span>
+          <span><strong>M</strong> 음악 On/Off</span>
+          <span><strong>R</strong> 재시작</span>
+          <span><strong>F</strong> 전체화면</span>
+        </div>
+        <button id="start-btn" class="start-btn" type="button">전투 시작</button>
+      </section>
+
+      <section class="game-panel">
+        <header class="hud-bar">
+          <div>
+            <p class="label">Player Base</p>
+            <p id="player-base-text" class="value">1200 / 1200</p>
+          </div>
+          <div class="hud-center">
+            <p class="label">Cost / Income</p>
+            <p id="resource-text" class="value">220 / 360 · +22/s</p>
+          </div>
+          <div class="align-right">
+            <p class="label">Enemy Base</p>
+            <p id="enemy-base-text" class="value">1200 / 1200</p>
+          </div>
+        </header>
+
+        <div class="canvas-frame">
+          <canvas id="game" width="1280" height="720" aria-label="Line battle game"></canvas>
+          <div id="overlay" class="overlay">
+            <div class="overlay-card">
+              <h2 id="overlay-title">전투 준비</h2>
+              <p id="overlay-message">
+                버튼이나 숫자키로 유닛을 뽑아 적 기지를 밀어보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <section id="summon-panel" class="summon-panel">
+          <button id="upgrade-btn" class="unit-btn upgrade-btn" type="button">
+            <span>Q. 수입 강화</span>
+            <strong id="upgrade-cost-text">120</strong>
+            <small>초당 수입 +8</small>
+          </button>
+        </section>
+
+        <footer class="status-bar">
+          <p id="status-text">Start를 누르면 전투가 시작됩니다.</p>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const ui = {
+  startBtn: document.getElementById("start-btn"),
+  playerBaseText: document.getElementById("player-base-text"),
+  enemyBaseText: document.getElementById("enemy-base-text"),
+  resourceText: document.getElementById("resource-text"),
+  statusText: document.getElementById("status-text"),
+  overlay: document.getElementById("overlay"),
+  overlayTitle: document.getElementById("overlay-title"),
+  overlayMessage: document.getElementById("overlay-message"),
+  summonPanel: document.getElementById("summon-panel"),
+  upgradeBtn: document.getElementById("upgrade-btn"),
+  upgradeCostText: document.getElementById("upgrade-cost-text"),
+  unitButtons: [],
+};
+
+const KEY_BINDINGS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "s", "d", "f", "g", "h"];
+const UNIT_ORDER = [
+  "miniTank",
+  "tank",
+  "sword",
+  "dash",
+  "battle",
+  "cannon",
+  "guard",
+  "ninja",
+  "giant",
+  "sniper",
+  "hammer",
+  "mage",
+  "rocket",
+  "laser",
+  "drill",
+  "angel",
+];
+
+const UNIT_TYPES = {
+  miniTank: {
+    key: "miniTank",
+    label: "꼬마탱커냥",
+    cost: 10,
+    hp: 140,
+    damage: 8,
+    speed: 34,
+    attackRange: 22,
+    cooldown: 0.88,
+    reach: 16,
+    color: "#fffef8",
+    outline: "#342118",
+    accent: "#8fd16a",
+    size: 28,
+  },
+  tank: {
+    key: "tank",
+    label: "탱크냥",
+    cost: 50,
+    hp: 280,
+    damage: 22,
+    speed: 36,
+    attackRange: 34,
+    cooldown: 0.9,
+    reach: 26,
+    color: "#fffef8",
+    outline: "#342118",
+    accent: "#ef9a55",
+    size: 40,
+  },
+  sword: {
+    key: "sword",
+    label: "검사냥",
+    cost: 90,
+    hp: 170,
+    damage: 40,
+    speed: 54,
+    attackRange: 38,
+    cooldown: 0.72,
+    reach: 32,
+    color: "#fffefb",
+    outline: "#342118",
+    accent: "#ff6f61",
+    size: 34,
+  },
+  cannon: {
+    key: "cannon",
+    label: "캐논냥",
+    cost: 220,
+    hp: 120,
+    damage: 56,
+    speed: 28,
+    attackRange: 170,
+    cooldown: 1.32,
+    reach: 80,
+    color: "#fffaf1",
+    outline: "#342118",
+    accent: "#5f91ff",
+    size: 38,
+    projectile: true,
+  },
+  dash: {
+    key: "dash",
+    label: "질주냥",
+    cost: 120,
+    hp: 120,
+    damage: 34,
+    speed: 108,
+    attackRange: 24,
+    cooldown: 0.42,
+    reach: 22,
+    color: "#fffef8",
+    outline: "#342118",
+    accent: "#ffb347",
+    size: 30,
+  },
+  battle: {
+    key: "battle",
+    label: "전투냥",
+    cost: 200,
+    hp: 150,
+    damage: 62,
+    speed: 34,
+    attackRange: 310,
+    cooldown: 1.05,
+    reach: 124,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#f64674",
+    size: 36,
+    projectile: true,
+  },
+  guard: {
+    key: "guard",
+    label: "방패냥",
+    cost: 130,
+    hp: 360,
+    damage: 16,
+    speed: 26,
+    attackRange: 28,
+    cooldown: 0.78,
+    reach: 18,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#6aa4ff",
+    size: 42,
+  },
+  ninja: {
+    key: "ninja",
+    label: "닌자냥",
+    cost: 150,
+    hp: 110,
+    damage: 42,
+    speed: 94,
+    attackRange: 26,
+    cooldown: 0.34,
+    reach: 30,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#2f2f2f",
+    size: 30,
+  },
+  giant: {
+    key: "giant",
+    label: "거인냥",
+    cost: 320,
+    hp: 520,
+    damage: 68,
+    speed: 22,
+    attackRange: 42,
+    cooldown: 1.26,
+    reach: 36,
+    color: "#fff9ef",
+    outline: "#342118",
+    accent: "#7a5cff",
+    size: 52,
+  },
+  sniper: {
+    key: "sniper",
+    label: "저격냥",
+    cost: 280,
+    hp: 120,
+    damage: 104,
+    speed: 22,
+    attackRange: 360,
+    cooldown: 1.8,
+    reach: 144,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#4bdc9f",
+    size: 34,
+    projectile: true,
+  },
+  hammer: {
+    key: "hammer",
+    label: "망치냥",
+    cost: 230,
+    hp: 260,
+    damage: 88,
+    speed: 30,
+    attackRange: 36,
+    cooldown: 1.12,
+    reach: 42,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#ff9d4d",
+    size: 42,
+  },
+  mage: {
+    key: "mage",
+    label: "마법냥",
+    cost: 240,
+    hp: 130,
+    damage: 58,
+    speed: 24,
+    attackRange: 220,
+    cooldown: 1.06,
+    reach: 98,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#9c6bff",
+    size: 36,
+    projectile: true,
+  },
+  rocket: {
+    key: "rocket",
+    label: "로켓냥",
+    cost: 260,
+    hp: 150,
+    damage: 76,
+    speed: 40,
+    attackRange: 200,
+    cooldown: 1.18,
+    reach: 90,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#ff5f5f",
+    size: 38,
+    projectile: true,
+  },
+  laser: {
+    key: "laser",
+    label: "레이저냥",
+    cost: 340,
+    hp: 160,
+    damage: 92,
+    speed: 26,
+    attackRange: 420,
+    cooldown: 1.48,
+    reach: 170,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#57d7ff",
+    size: 40,
+    projectile: true,
+  },
+  drill: {
+    key: "drill",
+    label: "드릴냥",
+    cost: 190,
+    hp: 210,
+    damage: 46,
+    speed: 64,
+    attackRange: 30,
+    cooldown: 0.62,
+    reach: 34,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#ffce57",
+    size: 34,
+  },
+  angel: {
+    key: "angel",
+    label: "천사냥",
+    cost: 290,
+    hp: 240,
+    damage: 70,
+    speed: 48,
+    attackRange: 210,
+    cooldown: 1.08,
+    reach: 92,
+    color: "#fffdf6",
+    outline: "#342118",
+    accent: "#ffd86b",
+    size: 38,
+    projectile: true,
+  },
+};
+
+const ENEMY_TYPES = [
+  {
+    key: "box",
+    name: "Box Bot",
+    hp: 130,
+    damage: 20,
+    speed: 42,
+    attackRange: 34,
+    cooldown: 0.95,
+    reach: 24,
+    size: 30,
+    color: "#7c614d",
+    accent: "#f0c36a",
+  },
+  {
+    key: "kettle",
+    name: "Kettle Tank",
+    hp: 240,
+    damage: 34,
+    speed: 30,
+    attackRange: 40,
+    cooldown: 1.18,
+    reach: 30,
+    size: 38,
+    color: "#5c6a78",
+    accent: "#8be0ff",
+  },
+  {
+    key: "speaker",
+    name: "Speaker Shot",
+    hp: 110,
+    damage: 26,
+    speed: 56,
+    attackRange: 150,
+    cooldown: 1.3,
+    reach: 76,
+    size: 28,
+    color: "#343434",
+    accent: "#ff7a7a",
+    projectile: true,
+  },
+  {
+    key: "lamp",
+    name: "Lamp Walker",
+    hp: 150,
+    damage: 22,
+    speed: 48,
+    attackRange: 40,
+    cooldown: 0.88,
+    reach: 24,
+    size: 32,
+    color: "#d8c58d",
+    accent: "#fff1a2",
+  },
+  {
+    key: "fan",
+    name: "Fan Spinner",
+    hp: 180,
+    damage: 28,
+    speed: 66,
+    attackRange: 48,
+    cooldown: 0.62,
+    reach: 24,
+    size: 34,
+    color: "#8fa3b5",
+    accent: "#d4f3ff",
+  },
+  {
+    key: "vacuum",
+    name: "Vacuum Roll",
+    hp: 300,
+    damage: 42,
+    speed: 34,
+    attackRange: 46,
+    cooldown: 1.06,
+    reach: 30,
+    size: 40,
+    color: "#a53d53",
+    accent: "#ffc169",
+  },
+  {
+    key: "toaster",
+    name: "Toaster Pop",
+    hp: 120,
+    damage: 38,
+    speed: 28,
+    attackRange: 180,
+    cooldown: 1.22,
+    reach: 88,
+    size: 30,
+    color: "#b6b6b6",
+    accent: "#ffb06a",
+    projectile: true,
+  },
+  {
+    key: "clock",
+    name: "Clock Tick",
+    hp: 220,
+    damage: 30,
+    speed: 54,
+    attackRange: 38,
+    cooldown: 0.7,
+    reach: 28,
+    size: 34,
+    color: "#c6924f",
+    accent: "#fff0b0",
+  },
+];
+
+const ENEMY_BOSS_TYPES = [
+  {
+    key: "fridgeBoss",
+    name: "Fridge Titan",
+    hp: 1400,
+    damage: 68,
+    speed: 18,
+    attackRange: 58,
+    cooldown: 1.08,
+    reach: 42,
+    size: 68,
+    color: "#d9e0e8",
+    accent: "#7fd7ff",
+    boss: true,
+  },
+  {
+    key: "washerBoss",
+    name: "Washer Golem",
+    hp: 1100,
+    damage: 54,
+    speed: 24,
+    attackRange: 220,
+    cooldown: 1.36,
+    reach: 98,
+    size: 62,
+    color: "#788fa6",
+    accent: "#9ff4ff",
+    projectile: true,
+    boss: true,
+  },
+  {
+    key: "microwaveBoss",
+    name: "Microwave King",
+    hp: 900,
+    damage: 84,
+    speed: 28,
+    attackRange: 52,
+    cooldown: 0.9,
+    reach: 44,
+    size: 60,
+    color: "#4b4b56",
+    accent: "#ff9b5c",
+    boss: true,
+  },
+];
+
+const FINAL_BOSS_TYPE = {
+  key: "titanHuman",
+  name: "titan human",
+  hp: 725,
+  damage: 120,
+  speed: 18,
+  attackRange: 240,
+  cooldown: 0.96,
+  reach: 118,
+  size: 118,
+  color: "#8a8f99",
+  accent: "#ff4f4f",
+  boss: true,
+};
+
+const WORLD = {
+  width: 1280,
+  height: 720,
+  laneY: 530,
+  laneH: 110,
+  playerBaseX: 116,
+  enemyBaseX: 1164,
+};
+
+const state = createInitialState();
+let rafId = 0;
+let lastTs = 0;
+let nextUnitId = 1;
+let audioCtx = null;
+let musicTimer = 0;
+let musicStep = 0;
+let musicEnabled = true;
+
+function createSpawnCooldowns() {
+  return Object.fromEntries(UNIT_ORDER.map((key) => [key, 0]));
+}
+
+function getUnitTagline(type) {
+  const taglines = {
+    miniTank: "10 · 초저가 탱커",
+    tank: "50 · 싸고 튼튼한 전열",
+    sword: "90 · 기본 근접 딜러",
+    dash: "120 · 초고속 돌격",
+    battle: "200 · 엄청 긴 사거리",
+    cannon: "220 · 후방 포격",
+    guard: "130 · 전선 유지",
+    ninja: "150 · 빠른 연타",
+    giant: "320 · 초중량 탱커",
+    sniper: "280 · 초장거리 저격",
+    hammer: "230 · 강력한 한방",
+    mage: "240 · 마법 원거리",
+    rocket: "260 · 기동 포격",
+    laser: "340 · 최장 레이저",
+    drill: "190 · 파고드는 전사",
+    angel: "290 · 빛의 탄막",
+  };
+  return taglines[type.key] || `${type.cost} · 고양이 출격`;
+}
+
+function renderUnitButtons() {
+  const upgradeBtn = ui.upgradeBtn;
+  upgradeBtn.remove();
+
+  for (const key of UNIT_ORDER) {
+    const type = UNIT_TYPES[key];
+    const hotkey = KEY_BINDINGS[UNIT_ORDER.indexOf(key)] || "?";
+    const button = document.createElement("button");
+    button.className = "unit-btn";
+    button.type = "button";
+    button.dataset.unit = key;
+    button.innerHTML = `<span>${hotkey.toUpperCase()}. ${type.label}</span><strong>${type.cost}</strong><small>${getUnitTagline(type)}</small>`;
+    button.addEventListener("click", () => spawnPlayerUnit(key));
+    ui.summonPanel.appendChild(button);
+  }
+
+  ui.summonPanel.appendChild(upgradeBtn);
+  ui.unitButtons = Array.from(document.querySelectorAll(".unit-btn[data-unit]"));
+}
+
+function createInitialState() {
+  return {
+    mode: "ready",
+    elapsed: 0,
+    message: "Start를 누르면 전투가 시작됩니다.",
+    winner: null,
+    income: 22,
+    incomeLevel: 1,
+    incomeUpgradeCost: 120,
+    cost: 220,
+    maxCost: 360,
+    spawnCooldowns: createSpawnCooldowns(),
+    playerBase: { hp: 1200, maxHp: 1200, x: WORLD.playerBaseX, y: WORLD.laneY, size: 86 },
+    enemyBase: { hp: 1200, maxHp: 1200, x: WORLD.enemyBaseX, y: WORLD.laneY, size: 86 },
+    units: [],
+    enemyUnits: [],
+    projectiles: [],
+    enemySpawnTimer: 3.4,
+    enemyWave: 0,
+    bossSpawnTimer: 38,
+    bossesSpawned: 0,
+    finalBossTimer: 20,
+    finalBossSpawned: false,
+    dust: [],
+  };
+}
+
+function resetState() {
+  const fresh = createInitialState();
+  nextUnitId = 1;
+  Object.keys(state).forEach((key) => delete state[key]);
+  Object.assign(state, fresh);
+  setOverlay("전투 준비", "버튼이나 숫자키로 유닛을 뽑아 적 기지를 밀어보세요.", true);
+  syncHud();
+  render();
+}
+
+function startGame() {
+  resetState();
+  state.mode = "playing";
+  state.message = "아군 출격! 코스트를 모아 라인을 밀어내세요.";
+  setOverlay("", "", false);
+  ensureMusic();
+  syncHud();
+}
+
+function spawnPlayerUnit(typeKey) {
+  const type = UNIT_TYPES[typeKey];
+  if (!type || state.mode !== "playing") {
+    return;
+  }
+
+  if (state.cost < type.cost) {
+    state.message = `${type.label} 소환 코스트가 부족합니다.`;
+    syncHud();
+    return;
+  }
+
+  if (state.spawnCooldowns[typeKey] > 0) {
+    state.message = `${type.label} 소환 대기 중입니다.`;
+    syncHud();
+    return;
+  }
+
+  state.cost -= type.cost;
+  state.spawnCooldowns[typeKey] = 1.1;
+  state.units.push(createUnit(type, "player"));
+  state.message = `${type.label} 출격!`;
+  syncHud();
+}
+
+function upgradeIncome() {
+  if (state.mode !== "playing") {
+    return;
+  }
+
+  if (state.cost < state.incomeUpgradeCost) {
+    state.message = "수입 강화 코스트가 부족합니다.";
+    syncHud();
+    return;
+  }
+
+  state.cost -= state.incomeUpgradeCost;
+  state.incomeLevel += 1;
+  state.income += 8;
+  state.maxCost += 55;
+  state.incomeUpgradeCost = Math.min(360, state.incomeUpgradeCost + 70);
+  state.message = `수입 레벨 ${state.incomeLevel} 달성!`;
+  syncHud();
+}
+
+function createUnit(type, team) {
+  const dir = team === "player" ? 1 : -1;
+  const startX = team === "player" ? WORLD.playerBaseX + 62 : WORLD.enemyBaseX - 62;
+
+  return {
+    id: `unit-${nextUnitId++}`,
+    team,
+    type: type.key || type.name.toLowerCase(),
+    label: type.label || type.name,
+    x: startX,
+    y: WORLD.laneY,
+    hp: type.hp,
+    maxHp: type.hp,
+    damage: type.damage,
+    speed: type.speed,
+    attackRange: type.attackRange,
+    cooldown: type.cooldown,
+    reach: type.reach,
+    size: type.size,
+    color: type.color,
+    outline: team === "player" ? "#3f2315" : "#241719",
+    accent: type.accent,
+    projectile: Boolean(type.projectile),
+    dir,
+    attackTimer: Math.random() * 0.35,
+    bob: Math.random() * Math.PI * 2,
+  };
+}
+
+function spawnEnemy() {
+  const unlockCount = Math.min(ENEMY_TYPES.length, 3 + Math.floor(state.elapsed / 18));
+  const pool = ENEMY_TYPES.slice(0, unlockCount);
+  const type = pool[Math.floor(Math.random() * pool.length)];
+  state.enemyUnits.push(createUnit(type, "enemy"));
+  state.enemyWave += 1;
+}
+
+function spawnBoss() {
+  const type = ENEMY_BOSS_TYPES[state.bossesSpawned % ENEMY_BOSS_TYPES.length];
+  const boss = createUnit(type, "enemy");
+  state.enemyUnits.push(boss);
+  state.bossesSpawned += 1;
+  state.message = `보스 등장! ${type.name}가 전선에 나타났습니다.`;
+  triggerBossEntrance(boss);
+}
+
+function spawnFinalBoss() {
+  const boss = createUnit(FINAL_BOSS_TYPE, "enemy");
+  state.enemyUnits.push(boss);
+  state.finalBossSpawned = true;
+  state.message = "최종보스 등장! titan human이 전장에 강림했습니다.";
+  triggerBossEntrance(boss);
+}
+
+function triggerBossEntrance(boss) {
+  ensureMusic();
+  playBossEntranceSting();
+  knockbackAllUnits(boss);
+  state.dust.push({
+    x: boss.x - 70,
+    y: boss.y - 30,
+    life: 0.52,
+    radius: 56,
+    color: "#ff8a6e",
+  });
+  state.dust.push({
+    x: boss.x - 18,
+    y: boss.y - 72,
+    life: 0.48,
+    radius: 44,
+    color: "#ffd166",
+  });
+}
+
+function knockbackAllUnits(boss) {
+  for (const unit of state.units) {
+    unit.x = WORLD.playerBaseX + 64 + Math.random() * 18;
+    unit.attackTimer = Math.max(unit.attackTimer, 0.9);
+  }
+
+  for (const enemy of state.enemyUnits) {
+    if (enemy.id === boss.id) {
+      continue;
+    }
+    enemy.x = WORLD.enemyBaseX - 64 - Math.random() * 18;
+    enemy.attackTimer = Math.max(enemy.attackTimer, 0.75);
+  }
+}
+
+function update(dt) {
+  if (state.mode !== "playing") {
+    return;
+  }
+
+  state.elapsed += dt;
+  state.cost = Math.min(state.maxCost, state.cost + state.income * dt);
+
+  Object.keys(state.spawnCooldowns).forEach((key) => {
+    state.spawnCooldowns[key] = Math.max(0, state.spawnCooldowns[key] - dt);
+  });
+
+  tickMusic(dt);
+
+  state.enemySpawnTimer -= dt;
+  if (state.enemySpawnTimer <= 0) {
+    spawnEnemy();
+    const tension = Math.max(1.25, 3.2 - state.elapsed * 0.018);
+    state.enemySpawnTimer = tension + Math.random() * 0.7;
+  }
+
+  state.bossSpawnTimer -= dt;
+  if (state.bossSpawnTimer <= 0) {
+    spawnBoss();
+    state.bossSpawnTimer = 44 + state.bossesSpawned * 10;
+  }
+
+  if (!state.finalBossSpawned) {
+    state.finalBossTimer -= dt;
+    if (state.finalBossTimer <= 0) {
+      spawnFinalBoss();
+    }
+  }
+
+  updateArmy(state.units, state.enemyUnits, state.enemyBase, dt);
+  updateArmy(state.enemyUnits, state.units, state.playerBase, dt);
+  updateProjectiles(dt);
+  updateDust(dt);
+  cleanDeadUnits();
+  checkGameOver();
+  syncHud();
+}
+
+function updateArmy(allies, enemies, enemyBase, dt) {
+  for (const unit of allies) {
+    unit.attackTimer = Math.max(0, unit.attackTimer - dt);
+    unit.bob += dt * 8;
+
+    const target = findClosestTarget(unit, enemies, enemyBase);
+    const distance = Math.abs(target.x - unit.x);
+    const desiredGap = unit.attackRange + (target.size || 58) * 0.45;
+
+    if (distance > desiredGap) {
+      unit.x += unit.speed * unit.dir * dt;
+      const minX = WORLD.playerBaseX + 55;
+      const maxX = WORLD.enemyBaseX - 55;
+      unit.x = Math.min(maxX, Math.max(minX, unit.x));
+      continue;
+    }
+
+    if (unit.attackTimer > 0) {
+      continue;
+    }
+
+    unit.attackTimer = unit.cooldown;
+
+    if (unit.projectile) {
+      state.projectiles.push({
+        x: unit.x + unit.dir * (unit.size * 0.55),
+        y: unit.y - unit.size * 0.6,
+        dir: unit.dir,
+        speed: 250,
+        damage: unit.damage,
+        rangeLeft: unit.attackRange + 80,
+        team: unit.team,
+        color: unit.accent,
+        radius: 8,
+      });
+    } else {
+      target.hp -= unit.damage;
+      state.dust.push({
+        x: target.x - unit.dir * 10,
+        y: target.y - 20,
+        life: 0.28,
+        radius: 22,
+        color: unit.accent,
+      });
+    }
+  }
+}
+
+function findClosestTarget(unit, enemies, enemyBase) {
+  let best = enemyBase;
+
+  let bestDistance = Math.abs(best.x - unit.x);
+  for (const enemy of enemies) {
+    const distance = Math.abs(enemy.x - unit.x);
+    if (distance < bestDistance) {
+      best = enemy;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+function updateProjectiles(dt) {
+  for (const projectile of state.projectiles) {
+    projectile.x += projectile.speed * projectile.dir * dt;
+    projectile.rangeLeft -= projectile.speed * dt;
+
+    const targets = projectile.team === "player" ? state.enemyUnits : state.units;
+    const base = projectile.team === "player" ? state.enemyBase : state.playerBase;
+    const baseX = projectile.team === "player" ? WORLD.enemyBaseX : WORLD.playerBaseX;
+
+    let hit = null;
+    for (const target of targets) {
+      if (Math.abs(projectile.x - target.x) <= target.size * 0.65) {
+        hit = target;
+        break;
+      }
+    }
+
+    if (hit) {
+      hit.hp -= projectile.damage;
+      projectile.rangeLeft = -1;
+      state.dust.push({
+        x: hit.x,
+        y: hit.y - hit.size * 0.6,
+        life: 0.3,
+        radius: 26,
+        color: projectile.color,
+      });
+      continue;
+    }
+
+    if (Math.abs(projectile.x - baseX) < 46) {
+      base.hp -= projectile.damage;
+      projectile.rangeLeft = -1;
+      state.dust.push({
+        x: baseX,
+        y: WORLD.laneY - 64,
+        life: 0.36,
+        radius: 30,
+        color: projectile.color,
+      });
+    }
+  }
+
+  state.projectiles = state.projectiles.filter((projectile) => projectile.rangeLeft > 0);
+}
+
+function updateDust(dt) {
+  for (const puff of state.dust) {
+    puff.life -= dt;
+    puff.radius += 40 * dt;
+  }
+  state.dust = state.dust.filter((puff) => puff.life > 0);
+}
+
+function cleanDeadUnits() {
+  state.units = state.units.filter((unit) => unit.hp > 0);
+  state.enemyUnits = state.enemyUnits.filter((unit) => unit.hp > 0);
+  state.playerBase.hp = Math.max(0, state.playerBase.hp);
+  state.enemyBase.hp = Math.max(0, state.enemyBase.hp);
+}
+
+function checkGameOver() {
+  if (state.playerBase.hp <= 0) {
+    state.mode = "gameover";
+    state.winner = "enemy";
+    state.message = "아군 기지가 무너졌습니다. R로 재도전하세요.";
+    setOverlay("패배", "적의 공세를 막지 못했습니다. 다시 배치를 조정해 보세요.", true);
+  } else if (state.enemyBase.hp <= 0) {
+    state.mode = "gameover";
+    state.winner = "player";
+    state.message = "승리! 적 기지를 무너뜨렸습니다.";
+    setOverlay("승리", "고양이 군단이 적 기지를 파괴했습니다. R을 눌러 다시 시작하세요.", true);
+  }
+}
+
+function syncHud() {
+  ui.playerBaseText.textContent = `${Math.ceil(state.playerBase.hp)} / ${state.playerBase.maxHp}`;
+  ui.enemyBaseText.textContent = `${Math.ceil(state.enemyBase.hp)} / ${state.enemyBase.maxHp}`;
+  ui.resourceText.textContent = `${Math.floor(state.cost)} / ${state.maxCost} · +${state.income}/s`;
+  ui.statusText.textContent = state.message;
+  ui.upgradeCostText.textContent = `${state.incomeUpgradeCost}`;
+
+  for (const btn of ui.unitButtons) {
+    const type = UNIT_TYPES[btn.dataset.unit];
+    const available = state.cost >= type.cost && state.spawnCooldowns[type.key] <= 0 && state.mode === "playing";
+    btn.classList.toggle("disabled", !available);
+  }
+
+  const canUpgrade = state.cost >= state.incomeUpgradeCost && state.mode === "playing";
+  ui.upgradeBtn.classList.toggle("disabled", !canUpgrade);
+}
+
+function ensureMusic() {
+  if (!musicEnabled) {
+    return;
+  }
+
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      return;
+    }
+    audioCtx = new AudioContextClass();
+  }
+
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
+  }
+}
+
+function toggleMusic() {
+  musicEnabled = !musicEnabled;
+  if (!musicEnabled && audioCtx) {
+    audioCtx.suspend().catch(() => {});
+    state.message = "배경음악을 껐습니다.";
+  } else {
+    ensureMusic();
+    state.message = "배경음악을 켰습니다.";
+  }
+  syncHud();
+}
+
+function tickMusic(dt) {
+  if (!musicEnabled || !audioCtx || audioCtx.state !== "running") {
+    return;
+  }
+
+  musicTimer -= dt;
+  while (musicTimer <= 0) {
+    playMusicStep(musicStep);
+    musicStep = (musicStep + 1) % 16;
+    musicTimer += 0.32;
+  }
+}
+
+function playMusicStep(step) {
+  const melody = [392, 440, 523.25, 440, 392, 440, 587.33, 523.25, 392, 440, 523.25, 659.25, 587.33, 523.25, 440, 392];
+  const bass = [196, 196, 220, 220, 174.61, 174.61, 196, 196];
+  const now = audioCtx.currentTime + 0.02;
+
+  playPianoNote(melody[step % melody.length], now, 0.62, 0.18);
+  if (step % 2 === 0) {
+    playPianoNote(bass[step % bass.length], now, 0.9, 0.12);
+  }
+}
+
+function playPianoNote(freq, start, duration, gainAmount) {
+  const master = audioCtx.createGain();
+  const lowpass = audioCtx.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.setValueAtTime(2200, start);
+  lowpass.Q.setValueAtTime(0.7, start);
+
+  master.gain.setValueAtTime(0.0001, start);
+  master.gain.exponentialRampToValueAtTime(gainAmount, start + 0.01);
+  master.gain.exponentialRampToValueAtTime(gainAmount * 0.38, start + 0.08);
+  master.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+  const partials = [
+    { type: "triangle", ratio: 1, gain: 1 },
+    { type: "sine", ratio: 2, gain: 0.32 },
+    { type: "sine", ratio: 3, gain: 0.14 },
+  ];
+
+  for (const partial of partials) {
+    const osc = audioCtx.createOscillator();
+    const oscGain = audioCtx.createGain();
+    osc.type = partial.type;
+    osc.frequency.setValueAtTime(freq * partial.ratio, start);
+    oscGain.gain.setValueAtTime(partial.gain, start);
+    osc.connect(oscGain);
+    oscGain.connect(lowpass);
+    osc.start(start);
+    osc.stop(start + duration + 0.08);
+  }
+
+  lowpass.connect(master);
+  master.connect(audioCtx.destination);
+}
+
+function playBossEntranceSting() {
+  if (!audioCtx || audioCtx.state !== "running") {
+    return;
+  }
+
+  const now = audioCtx.currentTime + 0.01;
+  playDrumHit(110, now, 0.34, 0.28);
+  playDrumHit(82, now + 0.18, 0.48, 0.36);
+}
+
+function playDrumHit(freq, start, duration, gainAmount) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(420, start);
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, start);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(38, freq * 0.45), start + duration);
+
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(gainAmount, start + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(start);
+  osc.stop(start + duration + 0.05);
+}
+
+function setOverlay(title, message, visible) {
+  ui.overlayTitle.textContent = title;
+  ui.overlayMessage.textContent = message;
+  ui.overlay.classList.toggle("visible", visible);
+}
+
+function drawUnitName(unit, yTop) {
+  const text = unit.label;
+  ctx.save();
+  ctx.font = '14px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+  const width = ctx.measureText(text).width + 16;
+  const x = unit.x - width / 2;
+  const y = yTop - 20;
+  const isFinalBoss = unit.type === "titanHuman";
+  ctx.fillStyle = isFinalBoss
+    ? "rgba(182, 24, 46, 0.96)"
+    : unit.team === "player"
+      ? "rgba(255, 248, 232, 0.94)"
+      : "rgba(52, 40, 44, 0.94)";
+  ctx.strokeStyle = isFinalBoss
+    ? "rgba(255, 214, 214, 0.95)"
+    : unit.team === "player"
+      ? "rgba(70, 41, 26, 0.9)"
+      : "rgba(255, 218, 194, 0.9)";
+  ctx.lineWidth = 2;
+  roundRect(x, y, width, 20, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = isFinalBoss ? "#fff7f7" : unit.team === "player" ? "#2e1f1b" : "#fff2dc";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, unit.x, y + 10.5);
+  ctx.restore();
+}
+
+function drawBase(x, team, hpRatio) {
+  const width = 112;
+  const height = 154;
+  const left = x - width / 2;
+  const top = WORLD.laneY - height + 8;
+  const body = team === "player" ? "#fff8e7" : "#3f2d35";
+  const roof = team === "player" ? "#f1834f" : "#8a5962";
+
+  ctx.fillStyle = body;
+  roundRect(left, top + 28, width, height - 28, 24);
+  ctx.fill();
+  ctx.fillStyle = roof;
+  ctx.beginPath();
+  ctx.moveTo(left + 14, top + 38);
+  ctx.lineTo(left + width / 2, top);
+  ctx.lineTo(left + width - 14, top + 38);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = team === "player" ? "#251918" : "#fef0d1";
+  ctx.beginPath();
+  ctx.arc(x, top + 78, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(x - 6, top + 92, 12, 28);
+
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(left + 12, top - 20, width - 24, 10);
+  ctx.fillStyle = team === "player" ? "#4ac779" : "#ff7e6a";
+  ctx.fillRect(left + 12, top - 20, (width - 24) * hpRatio, 10);
+}
+
+function drawUnit(unit) {
+  if (unit.team === "enemy") {
+    drawEnemyObject(unit);
+    return;
+  }
+
+  const bounce = Math.sin(unit.bob) * 3;
+  const y = unit.y + bounce;
+  const facing = unit.dir;
+  ctx.save();
+  ctx.translate(unit.x, y);
+  ctx.scale(facing, 1);
+
+  ctx.strokeStyle = unit.outline;
+  ctx.lineWidth = 4;
+
+  ctx.fillStyle = "rgba(43, 26, 18, 0.12)";
+  ctx.beginPath();
+  ctx.ellipse(0, unit.size * 0.4, unit.size * 0.72, unit.size * 0.18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = unit.color;
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.28, -unit.size * 1.46);
+  ctx.lineTo(-unit.size * 0.08, -unit.size * 1.9);
+  ctx.lineTo(unit.size * 0.04, -unit.size * 1.42);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.28, -unit.size * 1.46);
+  ctx.lineTo(unit.size * 0.08, -unit.size * 1.9);
+  ctx.lineTo(-unit.size * 0.04, -unit.size * 1.42);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = unit.color;
+  roundedRectPath(-unit.size * 0.55, -unit.size * 1.15, unit.size * 1.1, unit.size * 0.95, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, -unit.size * 1.24, unit.size * 0.48, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = unit.outline;
+  ctx.beginPath();
+  ctx.arc(-unit.size * 0.14, -unit.size * 1.28, 4, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.14, -unit.size * 1.28, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, -unit.size * 1.18);
+  ctx.lineTo(0, -unit.size * 1.05);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.08);
+  ctx.quadraticCurveTo(0, -unit.size * 0.98, unit.size * 0.08, -unit.size * 1.08);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.1);
+  ctx.lineTo(-unit.size * 0.34, -unit.size * 1.16);
+  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.04);
+  ctx.lineTo(-unit.size * 0.34, -unit.size * 1.02);
+  ctx.moveTo(unit.size * 0.08, -unit.size * 1.1);
+  ctx.lineTo(unit.size * 0.34, -unit.size * 1.16);
+  ctx.moveTo(unit.size * 0.08, -unit.size * 1.04);
+  ctx.lineTo(unit.size * 0.34, -unit.size * 1.02);
+  ctx.stroke();
+
+  ctx.fillStyle = unit.color;
+  ctx.beginPath();
+  ctx.arc(-unit.size * 0.22, -unit.size * 0.08, unit.size * 0.12, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.22, -unit.size * 0.08, unit.size * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.34, -unit.size * 0.54);
+  ctx.quadraticCurveTo(-unit.size * 0.86, -unit.size * 0.86, -unit.size * 0.74, -unit.size * 0.18);
+  ctx.stroke();
+
+  ctx.fillStyle = unit.accent;
+  ctx.fillRect(unit.size * 0.06, -unit.size * 0.84, unit.reach, 10);
+  ctx.fillStyle = unit.outline;
+  ctx.fillRect(unit.size * 0.06 + unit.reach - 10, -unit.size * 0.9, 14, 20);
+
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.12, unit.size * 1.16, 7);
+  ctx.fillStyle = "#57d17b";
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.12, unit.size * 1.16 * (unit.hp / unit.maxHp), 7);
+  ctx.restore();
+  drawUnitName(unit, y - unit.size * 1.92);
+}
+
+function drawEnemyObject(unit) {
+  const bounce = Math.sin(unit.bob) * 2;
+  const y = unit.y + bounce;
+  ctx.save();
+  ctx.translate(unit.x, y);
+  ctx.scale(unit.dir, 1);
+
+  ctx.fillStyle = "rgba(20, 18, 18, 0.16)";
+  ctx.beginPath();
+  ctx.ellipse(0, unit.size * 0.42, unit.size * 0.76, unit.size * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = unit.outline;
+  ctx.lineWidth = 4;
+
+  if (unit.boss && unit.type === "titanHuman") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.32, -unit.size * 1.02, unit.size * 0.64, unit.size * 1.02, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 1.3, unit.size * 0.24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#232833";
+    ctx.fillRect(-unit.size * 0.18, -unit.size * 1.42, unit.size * 0.36, unit.size * 0.14);
+    ctx.strokeRect(-unit.size * 0.18, -unit.size * 1.42, unit.size * 0.36, unit.size * 0.14);
+    ctx.fillStyle = unit.accent;
+    ctx.beginPath();
+    ctx.arc(-unit.size * 0.08, -unit.size * 1.32, unit.size * 0.035, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.08, -unit.size * 1.32, unit.size * 0.035, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#646b76";
+    roundedRectPath(-unit.size * 0.5, -unit.size * 0.86, unit.size * 0.18, unit.size * 0.58, 10);
+    ctx.fill();
+    ctx.stroke();
+    roundedRectPath(unit.size * 0.32, -unit.size * 0.86, unit.size * 0.18, unit.size * 0.58, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.42, -unit.size * 0.3);
+    ctx.lineTo(-unit.size * 0.74, unit.size * 0.12);
+    ctx.lineTo(-unit.size * 0.62, unit.size * 0.2);
+    ctx.lineTo(-unit.size * 0.28, -unit.size * 0.14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(unit.size * 0.42, -unit.size * 0.3);
+    ctx.lineTo(unit.size * 0.74, unit.size * 0.12);
+    ctx.lineTo(unit.size * 0.62, unit.size * 0.2);
+    ctx.lineTo(unit.size * 0.28, -unit.size * 0.14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.18, 0);
+    ctx.lineTo(-unit.size * 0.34, unit.size * 0.74);
+    ctx.lineTo(-unit.size * 0.12, unit.size * 0.74);
+    ctx.lineTo(0, unit.size * 0.08);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(unit.size * 0.18, 0);
+    ctx.lineTo(unit.size * 0.34, unit.size * 0.74);
+    ctx.lineTo(unit.size * 0.12, unit.size * 0.74);
+    ctx.lineTo(0, unit.size * 0.08);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = unit.accent;
+    ctx.fillRect(-unit.size * 0.14, -unit.size * 0.7, unit.size * 0.28, unit.size * 0.08);
+    ctx.fillRect(-unit.size * 0.08, -unit.size * 0.18, unit.size * 0.16, unit.size * 0.08);
+  } else if (unit.boss && unit.type === "fridgeBoss") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.52, -unit.size * 1.18, unit.size * 1.04, unit.size * 1.3, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -unit.size * 1.12);
+    ctx.lineTo(0, unit.size * 0.06);
+    ctx.stroke();
+    ctx.fillStyle = unit.accent;
+    ctx.fillRect(unit.size * 0.22, -unit.size * 0.84, unit.size * 0.08, unit.size * 0.26);
+    ctx.fillRect(unit.size * 0.22, -unit.size * 0.26, unit.size * 0.08, unit.size * 0.26);
+  } else if (unit.boss && unit.type === "washerBoss") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.58, -unit.size * 1.08, unit.size * 1.16, unit.size * 1.2, 16);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#263445";
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.48, unit.size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = unit.accent;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.48, unit.size * 0.18, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (unit.boss && unit.type === "microwaveBoss") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.62, -unit.size * 1.02, unit.size * 1.24, unit.size * 1.08, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#1a1a1f";
+    ctx.fillRect(-unit.size * 0.42, -unit.size * 0.82, unit.size * 0.54, unit.size * 0.44);
+    ctx.strokeRect(-unit.size * 0.42, -unit.size * 0.82, unit.size * 0.54, unit.size * 0.44);
+    ctx.fillStyle = unit.accent;
+    ctx.beginPath();
+    ctx.arc(unit.size * 0.3, -unit.size * 0.76, unit.size * 0.06, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.3, -unit.size * 0.58, unit.size * 0.06, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.3, -unit.size * 0.4, unit.size * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (unit.type === "box") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.58, -unit.size * 1.1, unit.size * 1.16, unit.size * 1.16, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#d9b08b";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.46, -unit.size * 0.74);
+    ctx.lineTo(unit.size * 0.46, -unit.size * 0.3);
+    ctx.moveTo(-unit.size * 0.46, -unit.size * 0.3);
+    ctx.lineTo(unit.size * 0.46, -unit.size * 0.74);
+    ctx.stroke();
+  } else if (unit.type === "kettle") {
+    ctx.fillStyle = unit.color;
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.54, unit.size * 0.5, Math.PI, 0);
+    ctx.lineTo(unit.size * 0.42, 0);
+    ctx.lineTo(-unit.size * 0.42, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(unit.size * 0.42, -unit.size * 0.54, unit.size * 0.18, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.18, -unit.size * 1.02);
+    ctx.lineTo(unit.size * 0.12, -unit.size * 1.18);
+    ctx.lineTo(unit.size * 0.18, -unit.size * 0.94);
+    ctx.closePath();
+    ctx.fillStyle = unit.accent;
+    ctx.fill();
+    ctx.stroke();
+  } else if (unit.type === "lamp") {
+    ctx.fillStyle = unit.color;
+    ctx.fillRect(-unit.size * 0.18, -unit.size * 1.08, unit.size * 0.36, unit.size * 0.92);
+    ctx.strokeRect(-unit.size * 0.18, -unit.size * 1.08, unit.size * 0.36, unit.size * 0.92);
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.42, -unit.size * 1.08);
+    ctx.lineTo(0, -unit.size * 1.44);
+    ctx.lineTo(unit.size * 0.42, -unit.size * 1.08);
+    ctx.closePath();
+    ctx.fillStyle = unit.accent;
+    ctx.fill();
+    ctx.stroke();
+  } else if (unit.type === "fan") {
+    ctx.fillStyle = unit.color;
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.54, unit.size * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    for (let blade = 0; blade < 4; blade += 1) {
+      ctx.save();
+      ctx.rotate((Math.PI / 2) * blade + unit.bob * 0.16);
+      ctx.beginPath();
+      ctx.ellipse(unit.size * 0.18, -unit.size * 0.54, unit.size * 0.26, unit.size * 0.1, 0.4, 0, Math.PI * 2);
+      ctx.fillStyle = unit.accent;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = unit.color;
+    ctx.fillRect(-unit.size * 0.08, -unit.size * 0.18, unit.size * 0.16, unit.size * 0.4);
+  } else if (unit.type === "vacuum") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.56, -unit.size * 0.94, unit.size * 0.9, unit.size * 0.94, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(unit.size * 0.08, -unit.size * 0.34, unit.size * 0.18, 0, Math.PI * 2);
+    ctx.fillStyle = "#2f2f2f";
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(unit.size * 0.22, -unit.size * 0.82);
+    ctx.lineTo(unit.size * 0.64, -unit.size * 1.08);
+    ctx.lineTo(unit.size * 0.7, -unit.size * 0.98);
+    ctx.lineTo(unit.size * 0.34, -unit.size * 0.72);
+    ctx.closePath();
+    ctx.fillStyle = unit.accent;
+    ctx.fill();
+    ctx.stroke();
+  } else if (unit.type === "toaster") {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.48, -unit.size * 0.96, unit.size * 0.96, unit.size * 0.9, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = unit.accent;
+    ctx.fillRect(-unit.size * 0.2, -unit.size * 1.16, unit.size * 0.18, unit.size * 0.22);
+    ctx.fillRect(unit.size * 0.02, -unit.size * 1.16, unit.size * 0.18, unit.size * 0.22);
+    ctx.strokeRect(-unit.size * 0.2, -unit.size * 1.16, unit.size * 0.18, unit.size * 0.22);
+    ctx.strokeRect(unit.size * 0.02, -unit.size * 1.16, unit.size * 0.18, unit.size * 0.22);
+  } else if (unit.type === "clock") {
+    ctx.fillStyle = unit.color;
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.58, unit.size * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -unit.size * 0.58);
+    ctx.lineTo(0, -unit.size * 0.84);
+    ctx.moveTo(0, -unit.size * 0.58);
+    ctx.lineTo(unit.size * 0.18, -unit.size * 0.44);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = unit.color;
+    roundedRectPath(-unit.size * 0.6, -unit.size * 1.08, unit.size * 1.2, unit.size * 1.08, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(0, -unit.size * 0.54, unit.size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = unit.accent;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.58, -unit.size * 0.7);
+    ctx.lineTo(-unit.size * 0.18, -unit.size * 0.7);
+    ctx.moveTo(-unit.size * 0.58, -unit.size * 0.42);
+    ctx.lineTo(-unit.size * 0.18, -unit.size * 0.42);
+    ctx.moveTo(unit.size * 0.18, -unit.size * 0.7);
+    ctx.lineTo(unit.size * 0.58, -unit.size * 0.7);
+    ctx.moveTo(unit.size * 0.18, -unit.size * 0.42);
+    ctx.lineTo(unit.size * 0.58, -unit.size * 0.42);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = unit.outline;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.38, 0);
+  ctx.lineTo(-unit.size * 0.18, unit.size * 0.28);
+  ctx.moveTo(unit.size * 0.38, 0);
+  ctx.lineTo(unit.size * 0.18, unit.size * 0.28);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.2, unit.size * 1.16, 7);
+  ctx.fillStyle = unit.boss ? "#ff4f7a" : "#ff8a6e";
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.2, unit.size * 1.16 * (unit.hp / unit.maxHp), 7);
+  ctx.restore();
+  drawUnitName(unit, y - unit.size * 1.58);
+}
+
+function drawProjectile(projectile) {
+  ctx.fillStyle = projectile.color;
+  ctx.beginPath();
+  ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawDust() {
+  for (const puff of state.dust) {
+    ctx.globalAlpha = Math.max(0, puff.life * 2.3);
+    ctx.fillStyle = puff.color;
+    ctx.beginPath();
+    ctx.arc(puff.x, puff.y, puff.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBackground() {
+  const sky = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+  sky.addColorStop(0, "#6cc8ff");
+  sky.addColorStop(0.4, "#b6e5ff");
+  sky.addColorStop(0.68, "#ffe1a6");
+  sky.addColorStop(1, "#cc7640");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+
+  const sun = ctx.createRadialGradient(980, 120, 10, 980, 120, 120);
+  sun.addColorStop(0, "rgba(255, 250, 220, 0.95)");
+  sun.addColorStop(1, "rgba(255, 250, 220, 0)");
+  ctx.fillStyle = sun;
+  ctx.beginPath();
+  ctx.arc(980, 120, 120, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  for (let i = 0; i < 5; i += 1) {
+    ctx.beginPath();
+    ctx.ellipse(110 + i * 240, 118 + (i % 2) * 30, 78, 26, 0, 0, Math.PI * 2);
+    ctx.ellipse(160 + i * 240, 126 + (i % 2) * 30, 52, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = "#a78a70";
+  ctx.beginPath();
+  ctx.moveTo(0, 350);
+  ctx.lineTo(120, 280);
+  ctx.lineTo(220, 336);
+  ctx.lineTo(360, 250);
+  ctx.lineTo(500, 342);
+  ctx.lineTo(640, 268);
+  ctx.lineTo(790, 348);
+  ctx.lineTo(930, 274);
+  ctx.lineTo(1080, 336);
+  ctx.lineTo(1280, 250);
+  ctx.lineTo(1280, 430);
+  ctx.lineTo(0, 430);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#7d6170";
+  for (let i = 0; i < 11; i += 1) {
+    const x = 18 + i * 118;
+    const w = 44 + (i % 3) * 18;
+    const h = 84 + (i % 4) * 28;
+    ctx.fillRect(x, 360 - h, w, h);
+    ctx.fillRect(x + w * 0.2, 360 - h - 22, 12, 22);
+  }
+
+  ctx.fillStyle = "#c99461";
+  ctx.fillRect(0, WORLD.laneY - 8, WORLD.width, WORLD.height - WORLD.laneY + 8);
+  ctx.fillStyle = "#f1bf7f";
+  ctx.fillRect(0, WORLD.laneY - 18, WORLD.width, 16);
+  ctx.fillStyle = "#dca86d";
+  ctx.fillRect(0, WORLD.laneY - 62, WORLD.width, 44);
+  ctx.fillStyle = "#8a5433";
+  ctx.fillRect(0, WORLD.laneY + 72, WORLD.width, 8);
+  ctx.strokeStyle = "rgba(104, 55, 25, 0.18)";
+  ctx.lineWidth = 4;
+  for (let i = 0; i < 12; i += 1) {
+    const x = i * 118 + 24;
+    ctx.beginPath();
+    ctx.moveTo(x, WORLD.laneY - 18);
+    ctx.lineTo(x + 34, WORLD.laneY + 72);
+    ctx.stroke();
+  }
+}
+
+function render() {
+  drawBackground();
+  drawBase(WORLD.playerBaseX, "player", state.playerBase.hp / state.playerBase.maxHp);
+  drawBase(WORLD.enemyBaseX, "enemy", state.enemyBase.hp / state.enemyBase.maxHp);
+
+  const allUnits = [...state.units, ...state.enemyUnits].sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const unit of allUnits) {
+    drawUnit(unit);
+  }
+  for (const projectile of state.projectiles) {
+    drawProjectile(projectile);
+  }
+  drawDust();
+
+  ctx.fillStyle = "#2b1b16";
+  ctx.font = '24px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+  ctx.fillText(`Wave ${state.enemyWave}`, WORLD.width / 2 - 44, 54);
+  if (state.bossesSpawned > 0) {
+    ctx.fillStyle = "#8e1737";
+    ctx.font = '18px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+    ctx.fillText(`Boss ${state.bossesSpawned}`, WORLD.width / 2 - 32, 82);
+  }
+  if (!state.finalBossSpawned) {
+    ctx.fillStyle = "#4b2330";
+    ctx.font = '16px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+    ctx.fillText(`Final Boss in ${Math.max(0, Math.ceil(state.finalBossTimer))}s`, WORLD.width / 2 - 62, 108);
+  } else {
+    ctx.fillStyle = "#b3122f";
+    ctx.font = '18px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+    ctx.fillText("Final Boss: titan human", WORLD.width / 2 - 88, 108);
+  }
+}
+
+function loop(timestamp) {
+  const dt = Math.min(0.033, (timestamp - lastTs) / 1000 || 0.016);
+  lastTs = timestamp;
+  update(dt);
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+
+function roundRect(x, y, width, height, radius) {
+  roundedRectPath(x, y, width, height, radius);
+}
+
+function roundedRectPath(x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function handleKey(event) {
+  const key = event.key.toLowerCase();
+  const bindingIndex = KEY_BINDINGS.indexOf(key);
+  if (bindingIndex !== -1 && UNIT_ORDER[bindingIndex]) {
+    spawnPlayerUnit(UNIT_ORDER[bindingIndex]);
+  } else if (key === "q") {
+    upgradeIncome();
+  } else if (key === "m") {
+    toggleMusic();
+  } else if (key === "r") {
+    startGame();
+  } else if (key === "f") {
+    toggleFullscreen();
+  }
+}
+
+async function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  } else {
+    await canvas.requestFullscreen();
+  }
+}
+
+renderUnitButtons();
+ui.startBtn.addEventListener("click", startGame);
+ui.upgradeBtn.addEventListener("click", upgradeIncome);
+window.addEventListener("keydown", handleKey);
+document.addEventListener("fullscreenchange", render);
+document.addEventListener("pointerdown", ensureMusic, { once: true });
+
+window.render_game_to_text = () =>
+  JSON.stringify({
+    mode: state.mode,
+    coordinateSystem: "origin top-left, x rightward, y downward",
+    resources: {
+      cost: Math.floor(state.cost),
+      maxCost: state.maxCost,
+      incomePerSecond: state.income,
+      incomeLevel: state.incomeLevel,
+      upgradeCost: state.incomeUpgradeCost,
+    },
+    bases: {
+      player: { hp: Math.ceil(state.playerBase.hp), x: WORLD.playerBaseX },
+      enemy: { hp: Math.ceil(state.enemyBase.hp), x: WORLD.enemyBaseX },
+    },
+    playerUnits: state.units.map((unit) => ({
+      type: unit.type,
+      hp: Math.ceil(unit.hp),
+      x: Math.round(unit.x),
+      attackCooldown: Number(unit.attackTimer.toFixed(2)),
+    })),
+    enemyUnits: state.enemyUnits.map((unit) => ({
+      type: unit.type,
+      hp: Math.ceil(unit.hp),
+      x: Math.round(unit.x),
+      attackCooldown: Number(unit.attackTimer.toFixed(2)),
+    })),
+    projectiles: state.projectiles.map((projectile) => ({
+      x: Math.round(projectile.x),
+      dir: projectile.dir,
+      team: projectile.team,
+    })),
+    message: state.message,
+  });
+
+window.advanceTime = (ms) => {
+  const steps = Math.max(1, Math.round(ms / (1000 / 60)));
+  for (let index = 0; index < steps; index += 1) {
+    update(1 / 60);
+  }
+  render();
+};
+
+resetState();
+cancelAnimationFrame(rafId);
+rafId = requestAnimationFrame(loop);
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>물건치기-냥!</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-panel">
+        <p class="eyebrow">Cat Object Battle</p>
+        <h1>물건치기-냥!</h1>
+        <p class="intro">
+          물건 군단을 상대로 고양이 부대를 밀어넣는 횡스크롤 라인 전투 게임입니다. 코스트를
+          모아 고양이 유닛을 소환하고, 적 물건 기지를 먼저 부수세요.
+        </p>
+        <div class="control-list">
+          <span><strong>1-0 / A-S-D-F-G</strong> 유닛 소환</span>
+          <span><strong>Q</strong> 수입 강화</span>
+          <span><strong>M</strong> 음악 On/Off</span>
+          <span><strong>R</strong> 재시작</span>
+          <span><strong>F</strong> 전체화면</span>
+        </div>
+        <button id="start-btn" class="start-btn" type="button">전투 시작</button>
+      </section>
+
+      <section class="game-panel">
+        <header class="hud-bar">
+          <div>
+            <p class="label">Player Base</p>
+            <p id="player-base-text" class="value">1200 / 1200</p>
+          </div>
+          <div class="hud-center">
+            <p class="label">Cost / Income</p>
+            <p id="resource-text" class="value">220 / 360 · +22/s</p>
+          </div>
+          <div class="align-right">
+            <p class="label">Enemy Base</p>
+            <p id="enemy-base-text" class="value">1200 / 1200</p>
+          </div>
+        </header>
+
+        <div class="canvas-frame">
+          <canvas id="game" width="1280" height="720" aria-label="Line battle game"></canvas>
+          <div id="overlay" class="overlay">
+            <div class="overlay-card">
+              <h2 id="overlay-title">전투 준비</h2>
+              <p id="overlay-message">
+                버튼이나 숫자키로 유닛을 뽑아 적 기지를 밀어보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <section id="summon-panel" class="summon-panel">
+          <button id="upgrade-btn" class="unit-btn upgrade-btn" type="button">
+            <span>Q. 수입 강화</span>
+            <strong id="upgrade-cost-text">120</strong>
+            <small>초당 수입 +8</small>
+          </button>
+        </section>
+
+        <footer class="status-bar">
+          <p id="status-text">Start를 누르면 전투가 시작됩니다.</p>
+        </footer>
+      </section>
+    </main>
+
+    <script type="module" src="./src/game.js"></script>
+  </body>
+</html>
