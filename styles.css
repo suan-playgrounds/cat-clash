@@ -24,6 +24,34 @@ body {
     linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
 }
 
+body.vip-active {
+  --bg-top: #dff3ff;
+  --bg-bottom: #4f8fff;
+  --panel: rgba(235, 246, 255, 0.88);
+  --panel-strong: rgba(233, 245, 255, 0.96);
+  --accent: #3f8cff;
+  --accent-deep: #1d57c8;
+  --shadow: rgba(20, 46, 104, 0.24);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 34%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+}
+
+body.vip-active .launch-screen {
+  background:
+    radial-gradient(circle at top, rgba(208, 234, 255, 0.45), transparent 35%),
+    linear-gradient(180deg, rgba(18, 48, 112, 0.52), rgba(10, 24, 72, 0.84));
+}
+
+body.vip-active .launch-card,
+body.vip-active .hero-panel,
+body.vip-active .game-panel {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.98), transparent 28%),
+    linear-gradient(180deg, rgba(240, 248, 255, 0.98), rgba(214, 231, 255, 0.94));
+  border-color: rgba(58, 114, 206, 0.2);
+}
+
 .launch-screen {
   position: fixed;
   inset: 0;
@@ -72,6 +100,148 @@ body {
   border-radius: 24px;
   background: rgba(244, 248, 255, 0.82);
   border: 2px solid rgba(68, 116, 179, 0.16);
+}
+
+.team-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(239, 250, 244, 0.86);
+  border: 2px solid rgba(63, 151, 104, 0.16);
+}
+
+.team-result {
+  margin: 0 0 12px;
+  min-height: 24px;
+  font-size: 0.94rem;
+}
+
+.team-slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.team-slot {
+  appearance: none;
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 2px dashed rgba(83, 126, 97, 0.22);
+  background: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.team-slot strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.76rem;
+  opacity: 0.7;
+}
+
+.team-slot.filled {
+  border-style: solid;
+  border-color: rgba(63, 151, 104, 0.36);
+  background: linear-gradient(180deg, rgba(228, 255, 236, 0.98), rgba(198, 245, 211, 0.96));
+}
+
+.team-slot.active {
+  border-color: rgba(28, 94, 214, 0.82);
+  box-shadow: 0 0 0 3px rgba(103, 164, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.team-roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.team-chip {
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 2px solid rgba(83, 126, 97, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.team-chip.selected {
+  border-color: rgba(63, 151, 104, 0.82);
+  background: linear-gradient(180deg, rgba(223, 255, 232, 0.98), rgba(181, 240, 198, 0.98));
+}
+
+.team-chip.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rarity-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 0.72rem;
+  vertical-align: middle;
+  color: #fff;
+}
+
+.rarity-common {
+  border-color: rgba(116, 116, 116, 0.18);
+  background: rgba(244, 241, 236, 0.95);
+}
+
+.rarity-rare {
+  border-color: rgba(55, 110, 211, 0.24);
+  background: rgba(237, 245, 255, 0.96);
+}
+
+.rarity-super {
+  border-color: rgba(142, 82, 211, 0.24);
+  background: rgba(246, 238, 255, 0.96);
+}
+
+.rarity-legend {
+  border-color: rgba(232, 149, 32, 0.26);
+  background: rgba(255, 245, 223, 0.98);
+}
+
+.rarity-vip {
+  border-color: rgba(217, 171, 43, 0.34);
+  background: linear-gradient(180deg, rgba(255, 244, 194, 0.98), rgba(255, 220, 109, 0.98));
+}
+
+.rarity-badge.common {
+  background: #8a8a8a;
+}
+
+.rarity-badge.rare {
+  background: #4383ea;
+}
+
+.rarity-badge.super {
+  background: #8e5ee6;
+}
+
+.rarity-badge.legend {
+  background: #eb9a2f;
+}
+
+.rarity-badge.vip {
+  background: linear-gradient(180deg, #ffd95e, #d79f1f);
+  color: #3f2a00;
 }
 
 .code-row {

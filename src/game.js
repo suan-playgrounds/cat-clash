@@ -9,6 +9,9 @@ const ui = {
   saveButtons: Array.from(document.querySelectorAll(".save-btn")),
   gachaBtn: document.getElementById("gacha-btn"),
   gachaCanScene: document.getElementById("gacha-can-scene"),
+  teamRoster: document.getElementById("team-roster"),
+  teamResult: document.getElementById("team-result"),
+  teamSlots: document.getElementById("team-slots"),
   codeInput: document.getElementById("code-input"),
   codeBtn: document.getElementById("code-btn"),
   codeResult: document.getElementById("code-result"),
@@ -35,9 +38,11 @@ const UNLOCK_STORAGE_KEY = "cat-object-battle-unlocked-units";
 const BILL_STORAGE_KEY = "cat-object-battle-bills";
 const CODE_STORAGE_KEY = "cat-object-battle-codes";
 const VIP_STORAGE_KEY = "cat-object-battle-vip";
+const TEAM_STORAGE_KEY = "cat-object-battle-team";
 const DEFAULT_UNLOCKED_UNITS = ["tank", "dash", "angel"];
 const REDEEM_CODES = {
   FISHGIFT: { type: "bills", amount: 2, message: "지폐 2장을 받았습니다." },
+  "123123123": { type: "bills", amount: 10, message: "지폐 10장을 받았습니다." },
   CATRAIN: { type: "unlock", unit: "battle", message: "전투상어가 즉시 해금되었습니다." },
   OCEANKING: { type: "unlock", unit: "giant", bonusBills: 3, message: "거대고래 해금 + 지폐 3장을 받았습니다." },
   "0907": { type: "vip", unit: "vipDragonFish", message: "VIP 패스와 전용 물고기 사신의 신 물고기를 획득했습니다." },
@@ -592,6 +597,106 @@ const UNIT_TYPES = {
   },
 };
 
+function buildExtraFishUnits() {
+  const templates = [
+    ["coralBlade", "산호칼치", 160, 170, 48, 70, 32, 0.58, 30, "#ffe8de", "#ff8a70", 32, false],
+    ["bubbleRay", "버블가오리", 175, 230, 34, 64, 180, 1.08, 80, "#eafcff", "#7bd3ff", 38, true],
+    ["shellGuard", "조개방패어", 140, 340, 18, 28, 30, 0.82, 18, "#fff1cf", "#d6a85f", 42, false],
+    ["iceFin", "얼음지느러미", 200, 180, 58, 78, 50, 0.62, 34, "#e9f8ff", "#80d8ff", 34, false],
+    ["flameGill", "불꽃아가미", 210, 190, 52, 66, 170, 1.1, 76, "#fff0e4", "#ff8154", 36, true],
+    ["stormTail", "폭풍꼬리", 220, 200, 60, 92, 34, 0.44, 28, "#eef6ff", "#6f9dff", 32, false],
+    ["pearlSinger", "진주노래어", 230, 160, 66, 44, 240, 1.24, 108, "#fff9ff", "#cf8cff", 36, true],
+    ["rockJaw", "바위턱어", 240, 390, 26, 24, 38, 1.06, 24, "#f7efe5", "#9a8169", 46, false],
+    ["goldWave", "황금파도어", 250, 210, 72, 58, 200, 0.96, 92, "#fff7d4", "#ffc73d", 38, true],
+    ["shadowEel", "그림자뱀장어", 180, 145, 88, 98, 26, 0.38, 24, "#f3f1ff", "#4b4b60", 30, false],
+    ["sunScale", "태양비늘어", 260, 250, 64, 54, 210, 0.9, 96, "#fff4d0", "#ffb347", 40, true],
+    ["moonFin", "달지느러미", 255, 190, 82, 60, 220, 1.14, 100, "#eef1ff", "#9e95ff", 38, true],
+    ["ironMouth", "강철입어", 270, 430, 30, 22, 44, 1.16, 28, "#f0f3f6", "#7f8f9e", 48, false],
+    ["waveRunner", "파도질주어", 150, 125, 42, 118, 22, 0.32, 20, "#f8fff2", "#7ddc5d", 28, false],
+    ["crystalFin", "수정지느러미", 280, 200, 86, 42, 280, 1.42, 122, "#f7fbff", "#6fe7ff", 36, true],
+    ["poisonKoi", "독비단잉어", 190, 175, 56, 62, 110, 0.74, 48, "#fff0fa", "#d95da1", 34, true],
+    ["reefWhale", "산호고래", 320, 540, 78, 24, 54, 1.28, 38, "#fff2e9", "#ff9178", 54, false],
+    ["saberShark", "세이버상어", 300, 260, 96, 58, 48, 0.56, 40, "#f4f7fa", "#6bb6ff", 40, false],
+    ["novaFish", "노바피쉬", 340, 220, 104, 46, 330, 1.5, 140, "#fffbe8", "#ffd74f", 40, true],
+    ["mistRay", "안개가오리", 225, 170, 62, 50, 190, 1.02, 88, "#f5fcff", "#8fd4e8", 36, true],
+    ["gearCarp", "기어잉어", 205, 260, 50, 38, 150, 0.92, 70, "#fff5ef", "#b58f6f", 38, true],
+    ["azureManta", "하늘만타", 295, 235, 92, 56, 260, 1.18, 112, "#eefcff", "#5bc7ff", 42, true],
+    ["rubyPiranha", "루비피라냐", 215, 160, 72, 108, 24, 0.34, 22, "#fff0f0", "#ff6464", 30, false],
+    ["emeraldCod", "에메랄드대구", 235, 300, 46, 34, 58, 0.82, 34, "#f2fff5", "#4fcd7c", 42, false],
+    ["thunderTuna", "천둥참치", 315, 245, 108, 66, 240, 0.98, 106, "#f3f7ff", "#5c8fff", 40, true],
+    ["prismKoi", "프리즘잉어", 275, 210, 88, 48, 250, 1.16, 108, "#fff8ff", "#b56cff", 38, true],
+    ["deepSeer", "심해예언어", 290, 185, 94, 40, 340, 1.52, 150, "#eef5ff", "#5f7cff", 36, true],
+    ["blazeMarlin", "홍염청새치", 330, 255, 112, 72, 80, 0.5, 52, "#fff0e7", "#ff7e4d", 40, false],
+    ["guardianKoi", "수호비단어", 285, 470, 34, 24, 40, 1.02, 24, "#fff6e8", "#e4b45f", 48, false],
+    ["starSwordfish", "별빛황새치", 360, 240, 118, 54, 360, 1.22, 160, "#f8fbff", "#8fd7ff", 42, true],
+  ];
+
+  return Object.fromEntries(
+    templates.map(([key, label, cost, hp, damage, speed, attackRange, cooldown, reach, color, accent, size, projectile]) => [
+      key,
+      { key, label, cost, hp, damage, speed, attackRange, cooldown, reach, color, outline: "#342118", accent, size, projectile },
+    ]),
+  );
+}
+
+const EXTRA_FISH_UNITS = buildExtraFishUnits();
+EXTRA_FISH_UNITS.healSeahorse = {
+  key: "healSeahorse",
+  label: "치유해마",
+  cost: 260,
+  hp: 170,
+  damage: 18,
+  speed: 40,
+  attackRange: 220,
+  cooldown: 1.05,
+  reach: 90,
+  color: "#fff7f1",
+  outline: "#342118",
+  accent: "#7be0c7",
+  size: 38,
+  projectile: true,
+  healAmount: 48,
+};
+EXTRA_FISH_UNITS.bombPuffer = {
+  key: "bombPuffer",
+  label: "폭탄복어",
+  cost: 190,
+  hp: 120,
+  damage: 150,
+  speed: 82,
+  attackRange: 24,
+  cooldown: 0.5,
+  reach: 26,
+  color: "#fff3d9",
+  outline: "#342118",
+  accent: "#ff8a5b",
+  size: 34,
+  selfDestruct: true,
+  splashRadius: 120,
+};
+Object.assign(UNIT_TYPES, EXTRA_FISH_UNITS);
+UNIT_ORDER.push(...Object.keys(EXTRA_FISH_UNITS));
+
+function getRarityLabel(type) {
+  if (type.vipOnly) {
+    return "VIP";
+  }
+  if (type.key === "vipDragonFish" || type.cost >= 340 || type.healAmount > 0) {
+    return "전설";
+  }
+  if (type.cost >= 250 || type.selfDestruct) {
+    return "슈퍼레어";
+  }
+  if (type.cost >= 140) {
+    return "레어";
+  }
+  return "일반";
+}
+
+for (const unit of Object.values(UNIT_TYPES)) {
+  unit.rarity = getRarityLabel(unit);
+}
+
 const ENEMY_TYPES = [
   {
     key: "box",
@@ -791,6 +896,8 @@ let unlockedUnitKeys = loadUnlockedUnits();
 let billCount = loadBills();
 let redeemedCodes = loadRedeemedCodes();
 let vipUnlocked = loadVipStatus();
+let selectedTeamKeys = loadSelectedTeam();
+let activeTeamSlotIndex = 0;
 
 function createSpawnCooldowns() {
   return Object.fromEntries(UNIT_ORDER.map((key) => [key, 0]));
@@ -858,18 +965,61 @@ function saveVipStatus() {
   } catch {}
 }
 
+function applyVipTheme() {
+  document.body.classList.toggle("vip-active", vipUnlocked);
+}
+
+function normalizeSelectedTeam(candidate = []) {
+  const unlocked = UNIT_ORDER.filter((key) => unlockedUnitKeys.includes(key));
+  const next = [];
+  for (const key of candidate) {
+    if (unlocked.includes(key) && !next.includes(key) && next.length < 5) {
+      next.push(key);
+    }
+  }
+  for (const key of unlocked) {
+    if (next.length >= 5) {
+      break;
+    }
+    if (!next.includes(key)) {
+      next.push(key);
+    }
+  }
+  return next;
+}
+
+function loadSelectedTeam() {
+  try {
+    const raw = window.localStorage.getItem(`${TEAM_STORAGE_KEY}-${selectedSaveSlot}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return normalizeSelectedTeam(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return normalizeSelectedTeam([]);
+  }
+}
+
+function saveSelectedTeam() {
+  try {
+    window.localStorage.setItem(`${TEAM_STORAGE_KEY}-${selectedSaveSlot}`, JSON.stringify(selectedTeamKeys));
+  } catch {}
+}
+
 function selectSaveSlot(slotKey) {
   selectedSaveSlot = slotKey;
   unlockedUnitKeys = loadUnlockedUnits();
   billCount = loadBills();
   redeemedCodes = loadRedeemedCodes();
   vipUnlocked = loadVipStatus();
+  applyVipTheme();
+  selectedTeamKeys = loadSelectedTeam();
+  activeTeamSlotIndex = 0;
   for (const button of ui.saveButtons) {
     button.classList.toggle("selected", button.dataset.save === slotKey);
   }
   renderUnlockRoster();
+  renderTeamRoster();
   renderUnitButtons();
-  ui.gachaResult.textContent = `${slotKey.toUpperCase()} 사용 중. 기본 해금: 방패메기, 질주고등어, 천사엔젤피쉬`;
+  setGachaMessage(`${slotKey.toUpperCase()} 사용 중. 기본 해금: 방패메기, 질주고등어, 천사엔젤피쉬`);
   if (ui.codeResult) {
     ui.codeResult.textContent = vipUnlocked
       ? `VIP 활성화됨. 사용 가능한 코드 수: ${Object.keys(REDEEM_CODES).length}개`
@@ -878,7 +1028,7 @@ function selectSaveSlot(slotKey) {
 }
 
 function getAvailableUnitOrder() {
-  return UNIT_ORDER.filter((key) => unlockedUnitKeys.includes(key));
+  return selectedTeamKeys.filter((key) => unlockedUnitKeys.includes(key)).slice(0, 5);
 }
 
 function getUnitTagline(type) {
@@ -900,8 +1050,32 @@ function getUnitTagline(type) {
     drill: "190 · 파고드는 전사",
     angel: "290 · 빛의 탄막",
     vipDragonFish: "450 · 입에서 레이저를 쏘는 VIP 전용 신어",
+    healSeahorse: "260 · 아군을 치료하는 지원가",
+    bombPuffer: "190 · 1회용 자폭 폭탄어",
   };
   return taglines[type.key] || `${type.cost} · 물고기 출격`;
+}
+
+function getRarityClass(rarity) {
+  const map = {
+    일반: "common",
+    레어: "rare",
+    슈퍼레어: "super",
+    전설: "legend",
+    VIP: "vip",
+  };
+  return map[rarity] || "common";
+}
+
+function setGachaMessage(message, rarity = "") {
+  if (!ui.gachaResult) {
+    return;
+  }
+  if (!rarity) {
+    ui.gachaResult.textContent = message;
+    return;
+  }
+  ui.gachaResult.innerHTML = `${message} <em class="rarity-badge ${getRarityClass(rarity)}">${rarity}</em>`;
 }
 
 function renderUnitButtons() {
@@ -917,7 +1091,7 @@ function renderUnitButtons() {
     button.className = "unit-btn";
     button.type = "button";
     button.dataset.unit = key;
-    button.innerHTML = `<span>${hotkey.toUpperCase()}. ${type.label}</span><strong>${type.cost}</strong><small>${getUnitTagline(type)}</small>`;
+    button.innerHTML = `<span>${hotkey.toUpperCase()}. ${type.label} <em class="rarity-badge ${getRarityClass(type.rarity)}">${type.rarity}</em></span><strong>${type.cost}</strong><small>${getUnitTagline(type)}</small>`;
     button.addEventListener("click", () => spawnPlayerUnit(key));
     ui.summonPanel.appendChild(button);
   }
@@ -927,16 +1101,113 @@ function renderUnitButtons() {
 }
 
 function renderUnlockRoster() {
+  if (!ui.unlockRoster) {
+    ui.billCount.textContent = `보유 지폐: ${billCount}장`;
+    return;
+  }
   ui.billCount.textContent = `보유 지폐: ${billCount}장`;
   ui.unlockRoster.innerHTML = "";
   for (const key of UNIT_ORDER) {
-    const chip = document.createElement("div");
     const unlocked = unlockedUnitKeys.includes(key);
-    chip.className = `unlock-chip${unlocked ? "" : " locked"}`;
-    const vipTag = UNIT_TYPES[key].vipOnly ? " [VIP]" : "";
-    chip.textContent = `${unlocked ? "해금" : "잠금"} · ${UNIT_TYPES[key].label}${vipTag}`;
+    if (!unlocked) {
+      continue;
+    }
+    const chip = document.createElement("div");
+    const type = UNIT_TYPES[key];
+    chip.className = `unlock-chip rarity-${getRarityClass(type.rarity)}`;
+    chip.textContent = `해금 · ${type.label} · ${type.rarity}`;
     ui.unlockRoster.appendChild(chip);
   }
+}
+
+function getGachaWeight(type) {
+  switch (type.rarity) {
+    case "일반":
+      return 50;
+    case "레어":
+      return 24;
+    case "슈퍼레어":
+      return 10;
+    case "전설":
+      return 3;
+    case "VIP":
+      return 1;
+    default:
+      return 10;
+  }
+}
+
+function pickWeightedUnit(pool) {
+  const totalWeight = pool.reduce((sum, key) => sum + getGachaWeight(UNIT_TYPES[key]), 0);
+  let roll = Math.random() * totalWeight;
+  for (const key of pool) {
+    roll -= getGachaWeight(UNIT_TYPES[key]);
+    if (roll <= 0) {
+      return key;
+    }
+  }
+  return pool[pool.length - 1];
+}
+
+function renderTeamRoster() {
+  if (!ui.teamRoster || !ui.teamResult) {
+    return;
+  }
+  selectedTeamKeys = normalizeSelectedTeam(selectedTeamKeys);
+  activeTeamSlotIndex = Math.max(0, Math.min(activeTeamSlotIndex, Math.max(0, selectedTeamKeys.length - 1)));
+  saveSelectedTeam();
+  ui.teamRoster.innerHTML = "";
+  ui.teamResult.textContent = `현재 출전: ${selectedTeamKeys.length}/5 · 위 슬롯을 누른 뒤 아래 물고기를 누르면 교체됩니다.`;
+
+  if (ui.teamSlots) {
+    ui.teamSlots.innerHTML = "";
+    for (let index = 0; index < 5; index += 1) {
+      const slot = document.createElement("button");
+      slot.type = "button";
+      const key = selectedTeamKeys[index];
+      const type = key ? UNIT_TYPES[key] : null;
+      slot.className = `team-slot${type ? ` filled rarity-${getRarityClass(type.rarity)}` : ""}${index === activeTeamSlotIndex ? " active" : ""}`;
+      slot.innerHTML = type
+        ? `<strong>${index + 1}번 슬롯</strong>${type.label}<br>${type.rarity}`
+        : `<strong>${index + 1}번 슬롯</strong>비어 있음`;
+      slot.addEventListener("click", () => {
+        activeTeamSlotIndex = index;
+        renderTeamRoster();
+      });
+      ui.teamSlots.appendChild(slot);
+    }
+  }
+
+  for (const key of UNIT_ORDER) {
+    if (!unlockedUnitKeys.includes(key)) {
+      continue;
+    }
+    const type = UNIT_TYPES[key];
+    const selected = selectedTeamKeys.includes(key);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `team-chip rarity-${getRarityClass(type.rarity)}${selected ? " selected" : ""}`;
+    button.textContent = `${selected ? "출전중" : "교체 가능"} · ${type.label} · ${type.rarity}`;
+    button.addEventListener("click", () => assignTeamUnit(key));
+    ui.teamRoster.appendChild(button);
+  }
+}
+
+function assignTeamUnit(key) {
+  const existingIndex = selectedTeamKeys.indexOf(key);
+  if (existingIndex === activeTeamSlotIndex) {
+    ui.teamResult.textContent = `${UNIT_TYPES[key].label}는 이미 ${activeTeamSlotIndex + 1}번 슬롯에 있습니다.`;
+    return;
+  }
+  if (existingIndex >= 0) {
+    [selectedTeamKeys[existingIndex], selectedTeamKeys[activeTeamSlotIndex]] = [selectedTeamKeys[activeTeamSlotIndex], selectedTeamKeys[existingIndex]];
+  } else {
+    selectedTeamKeys[activeTeamSlotIndex] = key;
+  }
+  selectedTeamKeys = normalizeSelectedTeam(selectedTeamKeys);
+  saveSelectedTeam();
+  renderTeamRoster();
+  renderUnitButtons();
 }
 
 function performGacha() {
@@ -944,29 +1215,30 @@ function performGacha() {
     return;
   }
   if (billCount < 1) {
-    ui.gachaResult.textContent = "지폐가 부족합니다. 레벨을 클리어해서 지폐를 모아보세요.";
+    setGachaMessage("지폐가 부족합니다. 레벨을 클리어해서 지폐를 모아보세요.");
     return;
   }
   const pool = UNIT_ORDER.filter((key) => !DEFAULT_UNLOCKED_UNITS.includes(key) && !unlockedUnitKeys.includes(key));
   if (pool.length === 0) {
-    ui.gachaResult.textContent = "모든 뽑기 유닛을 이미 해금했습니다.";
+    setGachaMessage("모든 뽑기 유닛을 이미 해금했습니다.");
     return;
   }
   gachaAnimating = true;
   ui.gachaBtn.disabled = true;
   ui.gachaBtn.classList.add("disabled");
-  ui.gachaResult.textContent = "통조림이 빛나고 있습니다...";
+  setGachaMessage("통조림이 빛나고 있습니다...");
   playGachaCanAnimation();
 
   window.setTimeout(() => {
     billCount -= 1;
     saveBills();
-    const picked = pool[Math.floor(Math.random() * pool.length)];
+    const picked = pickWeightedUnit(pool);
     unlockedUnitKeys = [...unlockedUnitKeys, picked];
     saveUnlockedUnits();
     renderUnlockRoster();
+    renderTeamRoster();
     renderUnitButtons();
-    ui.gachaResult.textContent = `통조림이 열리며 ${UNIT_TYPES[picked].label} 해금!`;
+    setGachaMessage(`통조림이 열리며 ${UNIT_TYPES[picked].label} 해금!`, UNIT_TYPES[picked].rarity);
     ui.gachaBtn.disabled = false;
     ui.gachaBtn.classList.remove("disabled");
     gachaAnimating = false;
@@ -1019,6 +1291,7 @@ function redeemCode() {
   if (reward.type === "vip") {
     vipUnlocked = true;
     saveVipStatus();
+    applyVipTheme();
     if (reward.unit && !unlockedUnitKeys.includes(reward.unit)) {
       unlockedUnitKeys = [...unlockedUnitKeys, reward.unit];
       saveUnlockedUnits();
@@ -1028,6 +1301,7 @@ function redeemCode() {
   redeemedCodes = [...redeemedCodes, code];
   saveRedeemedCodes();
   renderUnlockRoster();
+  renderTeamRoster();
   renderUnitButtons();
   ui.codeInput.value = "";
   ui.codeResult.textContent = `${code} 성공! ${reward.message}`;
@@ -1174,9 +1448,13 @@ function createUnit(type, team) {
     outline: team === "player" ? "#3f2315" : "#241719",
     accent: type.accent,
     projectile: Boolean(type.projectile),
+    healAmount: type.healAmount || 0,
+    selfDestruct: Boolean(type.selfDestruct),
+    splashRadius: type.splashRadius || 0,
     dir,
     attackTimer: Math.random() * 0.35,
     bob: Math.random() * Math.PI * 2,
+    halfHpTriggered: false,
   };
 }
 
@@ -1195,6 +1473,8 @@ function spawnBoss() {
   const boss = createUnit(type, "enemy");
   state.enemyUnits.push(boss);
   state.bossesSpawned += 1;
+  musicStep = 0;
+  musicTimer = 0;
   state.message = `보스 등장! ${type.name}가 전선에 나타났습니다.`;
   triggerBossEntrance(boss);
 }
@@ -1204,6 +1484,8 @@ function spawnFinalBoss() {
   const boss = createUnit(finalBossType, "enemy");
   state.enemyUnits.push(boss);
   state.finalBossSpawned = true;
+  musicStep = 0;
+  musicTimer = 0;
   state.message = `최종보스 등장! ${finalBossType.name}이 전장에 강림했습니다.`;
   triggerBossEntrance(boss);
 }
@@ -1294,6 +1576,32 @@ function updateArmy(allies, enemies, enemyBase, dt) {
     unit.attackTimer = Math.max(0, unit.attackTimer - dt);
     unit.bob += dt * 8;
 
+    const healTarget = unit.healAmount > 0 ? findClosestHealTarget(unit, allies) : null;
+    if (healTarget) {
+      const healDistance = Math.abs(healTarget.x - unit.x);
+      const healGap = unit.attackRange;
+      if (healDistance > healGap) {
+        unit.x += Math.sign(healTarget.x - unit.x) * unit.speed * dt;
+        const minX = WORLD.playerBaseX + 55;
+        const maxX = WORLD.enemyBaseX - 55;
+        unit.x = Math.min(maxX, Math.max(minX, unit.x));
+        continue;
+      }
+
+      if (unit.attackTimer <= 0) {
+        unit.attackTimer = unit.cooldown;
+        healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + unit.healAmount);
+        state.dust.push({
+          x: healTarget.x,
+          y: healTarget.y - healTarget.size * 0.7,
+          life: 0.34,
+          radius: 28,
+          color: "#7be0c7",
+        });
+      }
+      continue;
+    }
+
     const target = findClosestTarget(unit, enemies, enemyBase);
     const distance = Math.abs(target.x - unit.x);
     const desiredGap = unit.attackRange + (target.size || 58) * 0.45;
@@ -1311,6 +1619,35 @@ function updateArmy(allies, enemies, enemyBase, dt) {
     }
 
     unit.attackTimer = unit.cooldown;
+
+    if (unit.selfDestruct) {
+      const blastX = target.x;
+      const blastY = target.y - (target.size || 40) * 0.5;
+      for (const enemy of enemies) {
+        if (Math.abs(enemy.x - blastX) <= unit.splashRadius) {
+          applyUnitDamage(enemy, unit.damage);
+        }
+      }
+      if (Math.abs(enemyBase.x - blastX) <= unit.splashRadius) {
+        enemyBase.hp -= Math.max(0, Math.floor(unit.damage * 0.7));
+      }
+      unit.hp = 0;
+      state.dust.push({
+        x: blastX,
+        y: blastY,
+        life: 0.5,
+        radius: 64,
+        color: "#ff8a5b",
+      });
+      state.dust.push({
+        x: blastX,
+        y: blastY - 24,
+        life: 0.42,
+        radius: 42,
+        color: "#ffd166",
+      });
+      continue;
+    }
 
     if (unit.projectile) {
       const isMouthLaser = unit.type === "vipDragonFish";
@@ -1330,7 +1667,7 @@ function updateArmy(allies, enemies, enemyBase, dt) {
         baseHit: false,
       });
     } else {
-      target.hp -= unit.damage;
+      applyUnitDamage(target, unit.damage);
       state.dust.push({
         x: target.x - unit.dir * 10,
         y: target.y - 20,
@@ -1356,6 +1693,47 @@ function findClosestTarget(unit, enemies, enemyBase) {
   return best;
 }
 
+function findClosestHealTarget(unit, allies) {
+  let best = null;
+  let bestDistance = Infinity;
+  for (const ally of allies) {
+    if (ally.id === unit.id || ally.hp >= ally.maxHp) {
+      continue;
+    }
+    const distance = Math.abs(ally.x - unit.x);
+    if (distance < bestDistance) {
+      best = ally;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+function applyUnitDamage(target, amount) {
+  const previousHp = target.hp;
+  target.hp -= amount;
+  if (!target.halfHpTriggered && previousHp > target.maxHp * 0.5 && target.hp <= target.maxHp * 0.5) {
+    triggerHalfHpKnockback(target);
+  }
+}
+
+function triggerHalfHpKnockback(target) {
+  target.halfHpTriggered = true;
+  const knockbackDistance = target.boss ? 34 : 52;
+  const direction = target.team === "player" ? -1 : 1;
+  const minX = WORLD.playerBaseX + 55;
+  const maxX = WORLD.enemyBaseX - 55;
+  target.x = Math.min(maxX, Math.max(minX, target.x + direction * knockbackDistance));
+  target.attackTimer = Math.max(target.attackTimer, 0.6);
+  state.dust.push({
+    x: target.x,
+    y: target.y - target.size * 0.5,
+    life: 0.28,
+    radius: target.boss ? 34 : 24,
+    color: "#ffffff",
+  });
+}
+
 function updateProjectiles(dt) {
   for (const projectile of state.projectiles) {
     projectile.x += projectile.speed * projectile.dir * dt;
@@ -1371,7 +1749,7 @@ function updateProjectiles(dt) {
           continue;
         }
         if (Math.abs(projectile.x - target.x) <= target.size * 0.8) {
-          target.hp -= projectile.damage;
+          applyUnitDamage(target, projectile.damage);
           projectile.hitIds.push(target.id);
           state.dust.push({
             x: target.x,
@@ -1407,7 +1785,7 @@ function updateProjectiles(dt) {
     }
 
     if (hit) {
-      hit.hp -= projectile.damage;
+      applyUnitDamage(hit, projectile.damage);
       projectile.rangeLeft = -1;
       state.dust.push({
         x: hit.x,
@@ -1531,19 +1909,49 @@ function tickMusic(dt) {
     return;
   }
 
+  const finalBossActive = state.enemyUnits.some((unit) => unit.type === "titanHuman" && unit.hp > 0);
+  const bossBattleActive = state.enemyUnits.some((unit) => unit.boss);
   musicTimer -= dt;
   while (musicTimer <= 0) {
-    playMusicStep(musicStep);
+    playMusicStep(musicStep, bossBattleActive, finalBossActive);
     musicStep = (musicStep + 1) % 16;
-    musicTimer += 0.32;
+    musicTimer += finalBossActive ? 0.16 : bossBattleActive ? 0.22 : 0.32;
   }
 }
 
-function playMusicStep(step) {
+function playMusicStep(step, bossBattleActive, finalBossActive) {
   const theme = LEVELS[state.selectedLevelKey].theme;
   const melody = theme.melody;
   const bass = theme.bass;
   const now = audioCtx.currentTime + 0.02;
+
+  if (finalBossActive) {
+    const finalMelody = [melody[6] || melody[0], melody[4], melody[7] || melody[3], melody[5] || melody[2], melody[6] || melody[0], melody[7] || melody[1], melody[4], melody[2]];
+    const finalBass = [bass[0] * 0.8, bass[2] || bass[0], bass[1] || bass[0], bass[3] || bass[0]];
+    playPianoNote(finalMelody[step % finalMelody.length], now, 0.34, 0.28);
+    playPianoNote(finalMelody[(step + 3) % finalMelody.length] * 0.5, now + 0.01, 0.24, 0.11);
+    playPianoNote(finalBass[step % finalBass.length], now, 0.42, 0.18);
+    playDrumHit(step % 2 === 0 ? 72 : 96, now, 0.2, 0.24);
+    if (step % 4 === 1 || step % 4 === 3) {
+      playDrumHit(154, now + 0.03, 0.14, 0.12);
+    }
+    return;
+  }
+
+  if (bossBattleActive) {
+    const bossMelody = [melody[0] * 0.75, melody[2], melody[4], melody[6], melody[4], melody[7] || melody[1], melody[5] || melody[2], melody[3]];
+    const bossBass = [bass[0], bass[1] || bass[0], bass[2] || bass[0], bass[3] || bass[1] || bass[0]];
+    playPianoNote(bossMelody[step % bossMelody.length], now, 0.48, 0.22);
+    playPianoNote((bossMelody[(step + 2) % bossMelody.length] || bossMelody[0]) * 0.5, now + 0.02, 0.36, 0.09);
+    if (step % 2 === 0) {
+      playPianoNote(bossBass[step % bossBass.length], now, 0.62, 0.16);
+      playDrumHit(step % 4 === 0 ? 92 : 118, now, 0.22, 0.18);
+    }
+    if (step % 4 === 2) {
+      playDrumHit(146, now + 0.04, 0.18, 0.12);
+    }
+    return;
+  }
 
   playPianoNote(melody[step % melody.length], now, 0.62, 0.16);
   if (step % 2 === 0) {
@@ -2398,7 +2806,7 @@ function fireBaseLaser() {
     state.enemyBase.hp -= 120;
   } else {
     for (const target of targets) {
-      target.hp -= target.boss ? 180 : 120;
+      applyUnitDamage(target, target.boss ? 180 : 120);
       state.dust.push({
         x: target.x,
         y: target.y - target.size * 0.5,
@@ -2423,8 +2831,10 @@ async function toggleFullscreen() {
   }
 }
 
-renderUnitButtons();
 renderUnlockRoster();
+renderTeamRoster();
+renderUnitButtons();
+applyVipTheme();
 ui.saveButtons.forEach((button) => {
   button.addEventListener("click", () => selectSaveSlot(button.dataset.save));
 });

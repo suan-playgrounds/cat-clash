@@ -83,7 +83,12 @@
           </div>
           <button id="gacha-btn" class="start-btn gacha-btn" type="button">물고기 뽑기</button>
           <p id="gacha-result" class="gacha-result">레벨 1개 클리어마다 지폐 1장을 얻습니다. 기본 해금: 방패메기, 질주고등어, 천사엔젤피쉬</p>
-          <div id="unlock-roster" class="unlock-roster"></div>
+        </div>
+        <div class="team-panel">
+          <p class="level-title">출전 5마리 선택</p>
+          <p id="team-result" class="team-result">보유한 물고기 중 5마리만 전투에 데려갈 수 있습니다.</p>
+          <div id="team-slots" class="team-slots"></div>
+          <div id="team-roster" class="team-roster"></div>
         </div>
         <div class="code-panel">
           <p class="level-title">코드 시스템</p>
@@ -91,7 +96,7 @@
             <input id="code-input" class="code-input" type="text" placeholder="코드를 입력하세요" />
             <button id="code-btn" class="code-btn" type="button">코드 입력</button>
           </div>
-          <p id="code-result" class="code-result">예시 코드: `FISHGIFT`, `CATRAIN`, `OCEANKING`, `0907`</p>
+          <p id="code-result" class="code-result">예시 코드: `FISHGIFT`, `123123123`, `CATRAIN`, `OCEANKING`, `0907`</p>
         </div>
       </div>
     </section>
