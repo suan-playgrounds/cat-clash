@@ -3,26 +3,116 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>물건치기-냥!</title>
+    <title>물고기의 복수</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <section id="launch-screen" class="launch-screen">
+      <div class="launch-card">
+        <p class="eyebrow">Fish vs Cat Battle</p>
+        <h1>물고기의 복수</h1>
+        <p class="intro">
+          레벨을 고르고 출격하세요. 각 전장은 배경, 음악, 보스 구성이 모두 다르고 아군은 물고기, 적은 고양이 군단입니다.
+        </p>
+        <button id="launch-start-btn" class="start-btn launch-start-btn" type="button">이 레벨로 출격</button>
+        <div class="save-panel">
+          <p class="level-title">게임 파일</p>
+          <div id="save-select" class="save-select">
+            <button class="save-btn selected" data-save="slot1" type="button">파일 1</button>
+            <button class="save-btn" data-save="slot2" type="button">파일 2</button>
+            <button class="save-btn" data-save="slot3" type="button">파일 3</button>
+          </div>
+        </div>
+        <div class="level-panel">
+          <p class="level-title">레벨 선택</p>
+          <div id="level-select" class="level-select">
+            <button class="level-btn selected" data-level="meadow" type="button">
+              <strong>1. 새벽 초원 격돌</strong>
+              <small>입문용 물건 러시</small>
+            </button>
+            <button class="level-btn" data-level="factory" type="button">
+              <strong>2. 폭주 공장 돌입</strong>
+              <small>보스가 빨리 나옴</small>
+            </button>
+            <button class="level-btn" data-level="apocalypse" type="button">
+              <strong>3. 종말 도시 붕괴</strong>
+              <small>최종보스 압박</small>
+            </button>
+            <button class="level-btn" data-level="freezer" type="button">
+              <strong>4. 냉기의 창고 습격</strong>
+              <small>냉장 보스 강화</small>
+            </button>
+            <button class="level-btn" data-level="neon" type="button">
+              <strong>5. 네온 야시장 난전</strong>
+              <small>빠른 오브젝트 웨이브</small>
+            </button>
+            <button class="level-btn" data-level="tower" type="button">
+              <strong>6. 시계탑 대혼란</strong>
+              <small>장거리 적 증가</small>
+            </button>
+            <button class="level-btn" data-level="harbor" type="button">
+              <strong>7. 폭풍 항구 돌파</strong>
+              <small>중장형 보스 압박</small>
+            </button>
+            <button class="level-btn" data-level="vault" type="button">
+              <strong>8. 비밀 금고 침공</strong>
+              <small>보스 순환 빠름</small>
+            </button>
+            <button class="level-btn" data-level="core" type="button">
+              <strong>9. 기계 심장 폭주</strong>
+              <small>최종보스 조기 등장</small>
+            </button>
+            <button class="level-btn" data-level="finale" type="button">
+              <strong>10. 초지옥 대강림</strong>
+              <small>시작부터 보스 출현</small>
+            </button>
+          </div>
+        </div>
+        <div class="gacha-panel">
+          <p class="level-title">메인 화면 뽑기</p>
+          <p id="bill-count" class="bill-count">보유 지폐: 0장</p>
+          <div id="gacha-can-scene" class="gacha-can-scene" aria-hidden="true">
+            <div class="gacha-flash"></div>
+            <div class="gacha-rays"></div>
+            <div class="gacha-can">
+              <div class="can-lid"></div>
+              <div class="can-body">
+                <span class="can-label">FISH CAN</span>
+              </div>
+            </div>
+          </div>
+          <button id="gacha-btn" class="start-btn gacha-btn" type="button">물고기 뽑기</button>
+          <p id="gacha-result" class="gacha-result">레벨 1개 클리어마다 지폐 1장을 얻습니다. 기본 해금: 방패메기, 질주고등어, 천사엔젤피쉬</p>
+          <div id="unlock-roster" class="unlock-roster"></div>
+        </div>
+        <div class="code-panel">
+          <p class="level-title">코드 시스템</p>
+          <div class="code-row">
+            <input id="code-input" class="code-input" type="text" placeholder="코드를 입력하세요" />
+            <button id="code-btn" class="code-btn" type="button">코드 입력</button>
+          </div>
+          <p id="code-result" class="code-result">예시 코드: `FISHGIFT`, `CATRAIN`, `OCEANKING`, `0907`</p>
+        </div>
+      </div>
+    </section>
     <main class="app-shell">
       <section class="hero-panel">
-        <p class="eyebrow">Cat Object Battle</p>
-        <h1>물건치기-냥!</h1>
+        <p class="eyebrow">Fish vs Cat Battle</p>
+        <h1>물고기의 복수</h1>
         <p class="intro">
-          물건 군단을 상대로 고양이 부대를 밀어넣는 횡스크롤 라인 전투 게임입니다. 코스트를
-          모아 고양이 유닛을 소환하고, 적 물건 기지를 먼저 부수세요.
+          고양이 군단을 상대로 물고기 부대를 밀어넣는 횡스크롤 라인 전투 게임입니다. 코스트를
+          모아 물고기 유닛을 소환하고, 적 고양이 기지를 먼저 부수세요.
         </p>
         <div class="control-list">
           <span><strong>1-0 / A-S-D-F-G</strong> 유닛 소환</span>
           <span><strong>Q</strong> 수입 강화</span>
+          <span><strong>E</strong> 베이스 레이저</span>
           <span><strong>M</strong> 음악 On/Off</span>
           <span><strong>R</strong> 재시작</span>
           <span><strong>F</strong> 전체화면</span>
         </div>
-        <button id="start-btn" class="start-btn" type="button">전투 시작</button>
+        <button id="start-btn" class="start-btn" type="button">현재 레벨 재시작</button>
+        <button id="home-btn" class="start-btn home-btn" type="button">처음부터 다시</button>
       </section>
 
       <section class="game-panel">
@@ -34,6 +124,7 @@
           <div class="hud-center">
             <p class="label">Cost / Income</p>
             <p id="resource-text" class="value">220 / 360 · +22/s</p>
+            <button id="base-laser-btn" class="laser-btn" type="button">E. 베이스 레이저</button>
           </div>
           <div class="align-right">
             <p class="label">Enemy Base</p>
@@ -47,7 +138,7 @@
             <div class="overlay-card">
               <h2 id="overlay-title">전투 준비</h2>
               <p id="overlay-message">
-                버튼이나 숫자키로 유닛을 뽑아 적 기지를 밀어보세요.
+                버튼이나 숫자키로 물고기를 뽑아 적 기지를 밀어보세요.
               </p>
             </div>
           </div>

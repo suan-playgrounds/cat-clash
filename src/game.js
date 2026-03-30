@@ -3,9 +3,23 @@ const ctx = canvas.getContext("2d");
 
 const ui = {
   startBtn: document.getElementById("start-btn"),
+  homeBtn: document.getElementById("home-btn"),
+  launchScreen: document.getElementById("launch-screen"),
+  launchStartBtn: document.getElementById("launch-start-btn"),
+  saveButtons: Array.from(document.querySelectorAll(".save-btn")),
+  gachaBtn: document.getElementById("gacha-btn"),
+  gachaCanScene: document.getElementById("gacha-can-scene"),
+  codeInput: document.getElementById("code-input"),
+  codeBtn: document.getElementById("code-btn"),
+  codeResult: document.getElementById("code-result"),
+  billCount: document.getElementById("bill-count"),
+  gachaResult: document.getElementById("gacha-result"),
+  unlockRoster: document.getElementById("unlock-roster"),
+  levelButtons: Array.from(document.querySelectorAll(".level-btn")),
   playerBaseText: document.getElementById("player-base-text"),
   enemyBaseText: document.getElementById("enemy-base-text"),
   resourceText: document.getElementById("resource-text"),
+  baseLaserBtn: document.getElementById("base-laser-btn"),
   statusText: document.getElementById("status-text"),
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlay-title"),
@@ -17,6 +31,279 @@ const ui = {
 };
 
 const KEY_BINDINGS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "s", "d", "f", "g", "h"];
+const UNLOCK_STORAGE_KEY = "cat-object-battle-unlocked-units";
+const BILL_STORAGE_KEY = "cat-object-battle-bills";
+const CODE_STORAGE_KEY = "cat-object-battle-codes";
+const VIP_STORAGE_KEY = "cat-object-battle-vip";
+const DEFAULT_UNLOCKED_UNITS = ["tank", "dash", "angel"];
+const REDEEM_CODES = {
+  FISHGIFT: { type: "bills", amount: 2, message: "지폐 2장을 받았습니다." },
+  CATRAIN: { type: "unlock", unit: "battle", message: "전투상어가 즉시 해금되었습니다." },
+  OCEANKING: { type: "unlock", unit: "giant", bonusBills: 3, message: "거대고래 해금 + 지폐 3장을 받았습니다." },
+  "0907": { type: "vip", unit: "vipDragonFish", message: "VIP 패스와 전용 물고기 사신의 신 물고기를 획득했습니다." },
+};
+const LEVELS = {
+  meadow: {
+    key: "meadow",
+    name: "새벽 초원 격돌",
+    enemySpawnBase: 3.8,
+    enemySpawnMin: 1.55,
+    enemySpawnDecay: 0.014,
+    bossSpawnStart: 52,
+    bossSpawnStep: 12,
+    finalBossTime: 30,
+    bossPool: ["fridgeBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#7fd2ff",
+      skyMid: "#d6f0ff",
+      skyBottom: "#ffe0ae",
+      sunX: 980,
+      sunY: 120,
+      mountain: "#a8b287",
+      skyline: "#708089",
+      groundTop: "#d5b07a",
+      groundBottom: "#c07e44",
+      accent: "#fff7c0",
+      melody: [392, 440, 523.25, 587.33, 659.25, 587.33, 523.25, 440],
+      bass: [196, 220, 196, 174.61],
+    },
+  },
+  factory: {
+    key: "factory",
+    name: "폭주 공장 돌입",
+    enemySpawnBase: 3.2,
+    enemySpawnMin: 1.25,
+    enemySpawnDecay: 0.018,
+    bossSpawnStart: 38,
+    bossSpawnStep: 10,
+    finalBossTime: 20,
+    bossPool: ["washerBoss", "microwaveBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#8db0c9",
+      skyMid: "#c7d8e3",
+      skyBottom: "#ffcf9d",
+      sunX: 1040,
+      sunY: 110,
+      mountain: "#8c8b96",
+      skyline: "#5a6670",
+      groundTop: "#cba074",
+      groundBottom: "#9a6238",
+      accent: "#d9f5ff",
+      melody: [329.63, 392, 440, 493.88, 523.25, 493.88, 440, 392],
+      bass: [164.81, 196, 220, 196],
+    },
+  },
+  apocalypse: {
+    key: "apocalypse",
+    name: "종말 도시 붕괴",
+    enemySpawnBase: 2.7,
+    enemySpawnMin: 0.95,
+    enemySpawnDecay: 0.024,
+    bossSpawnStart: 28,
+    bossSpawnStep: 8,
+    finalBossTime: 14,
+    bossPool: ["fridgeBoss", "washerBoss", "microwaveBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#4f5674",
+      skyMid: "#9d88a9",
+      skyBottom: "#ff9d6b",
+      sunX: 940,
+      sunY: 138,
+      mountain: "#65545f",
+      skyline: "#3c3744",
+      groundTop: "#c98d65",
+      groundBottom: "#86482e",
+      accent: "#ffcf9f",
+      melody: [261.63, 311.13, 392, 466.16, 523.25, 466.16, 392, 311.13],
+      bass: [130.81, 155.56, 174.61, 155.56],
+    },
+  },
+  freezer: {
+    key: "freezer",
+    name: "냉기의 창고 습격",
+    enemySpawnBase: 3.05,
+    enemySpawnMin: 1.1,
+    enemySpawnDecay: 0.02,
+    bossSpawnStart: 34,
+    bossSpawnStep: 10,
+    finalBossTime: 19,
+    bossPool: ["fridgeBoss", "fridgeBoss", "washerBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#a8e8ff",
+      skyMid: "#e8fbff",
+      skyBottom: "#d4efff",
+      sunX: 1010,
+      sunY: 92,
+      mountain: "#c7d9e8",
+      skyline: "#86a6bf",
+      groundTop: "#cde7f3",
+      groundBottom: "#8bb8cf",
+      accent: "#ffffff",
+      melody: [523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 493.88],
+      bass: [261.63, 293.66, 261.63, 220],
+    },
+  },
+  neon: {
+    key: "neon",
+    name: "네온 야시장 난전",
+    enemySpawnBase: 2.55,
+    enemySpawnMin: 0.88,
+    enemySpawnDecay: 0.026,
+    bossSpawnStart: 30,
+    bossSpawnStep: 9,
+    finalBossTime: 18,
+    bossPool: ["microwaveBoss", "washerBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#2a2254",
+      skyMid: "#583a88",
+      skyBottom: "#ff8d8d",
+      sunX: 1030,
+      sunY: 140,
+      mountain: "#5e4580",
+      skyline: "#241c3f",
+      groundTop: "#c67d7d",
+      groundBottom: "#8f3d5c",
+      accent: "#ff70d2",
+      melody: [440, 523.25, 659.25, 698.46, 659.25, 523.25, 440, 392],
+      bass: [220, 261.63, 220, 196],
+    },
+  },
+  tower: {
+    key: "tower",
+    name: "시계탑 대혼란",
+    enemySpawnBase: 2.9,
+    enemySpawnMin: 1.02,
+    enemySpawnDecay: 0.021,
+    bossSpawnStart: 33,
+    bossSpawnStep: 9,
+    finalBossTime: 17,
+    bossPool: ["washerBoss", "fridgeBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#7ea6c6",
+      skyMid: "#d7e7ef",
+      skyBottom: "#ffd59b",
+      sunX: 870,
+      sunY: 124,
+      mountain: "#9c8a71",
+      skyline: "#6f5f5f",
+      groundTop: "#d3aa75",
+      groundBottom: "#a56f46",
+      accent: "#fff0c1",
+      melody: [349.23, 392, 440, 523.25, 440, 392, 349.23, 293.66],
+      bass: [174.61, 196, 220, 196],
+    },
+  },
+  harbor: {
+    key: "harbor",
+    name: "폭풍 항구 돌파",
+    enemySpawnBase: 2.6,
+    enemySpawnMin: 0.96,
+    enemySpawnDecay: 0.024,
+    bossSpawnStart: 29,
+    bossSpawnStep: 8,
+    finalBossTime: 16,
+    bossPool: ["fridgeBoss", "microwaveBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#6eb2d8",
+      skyMid: "#c2e1ef",
+      skyBottom: "#ffcb8b",
+      sunX: 950,
+      sunY: 102,
+      mountain: "#7b8d98",
+      skyline: "#47606a",
+      groundTop: "#cfab72",
+      groundBottom: "#8d5f3c",
+      accent: "#d2f3ff",
+      melody: [392, 493.88, 587.33, 659.25, 587.33, 493.88, 392, 329.63],
+      bass: [196, 246.94, 196, 174.61],
+    },
+  },
+  vault: {
+    key: "vault",
+    name: "비밀 금고 침공",
+    enemySpawnBase: 2.45,
+    enemySpawnMin: 0.86,
+    enemySpawnDecay: 0.027,
+    bossSpawnStart: 27,
+    bossSpawnStep: 8,
+    finalBossTime: 15,
+    bossPool: ["washerBoss", "microwaveBoss", "fridgeBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#6a5f78",
+      skyMid: "#b9a8c6",
+      skyBottom: "#ffd4a8",
+      sunX: 1008,
+      sunY: 110,
+      mountain: "#8f7f70",
+      skyline: "#554a56",
+      groundTop: "#d0a36b",
+      groundBottom: "#935b3e",
+      accent: "#ffe8b8",
+      melody: [329.63, 415.3, 493.88, 554.37, 493.88, 415.3, 329.63, 277.18],
+      bass: [164.81, 207.65, 164.81, 138.59],
+    },
+  },
+  core: {
+    key: "core",
+    name: "기계 심장 폭주",
+    enemySpawnBase: 2.28,
+    enemySpawnMin: 0.8,
+    enemySpawnDecay: 0.03,
+    bossSpawnStart: 24,
+    bossSpawnStep: 7,
+    finalBossTime: 12,
+    bossPool: ["microwaveBoss", "washerBoss", "fridgeBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#402e50",
+      skyMid: "#7a5d85",
+      skyBottom: "#ff9d73",
+      sunX: 925,
+      sunY: 130,
+      mountain: "#6d5863",
+      skyline: "#312739",
+      groundTop: "#c98f63",
+      groundBottom: "#7f4631",
+      accent: "#ffb987",
+      melody: [293.66, 392, 466.16, 587.33, 466.16, 392, 293.66, 261.63],
+      bass: [146.83, 196, 233.08, 196],
+    },
+  },
+  finale: {
+    key: "finale",
+    name: "초지옥 대강림",
+    enemySpawnBase: 2.1,
+    enemySpawnMin: 0.74,
+    enemySpawnDecay: 0.032,
+    bossSpawnStart: 0.6,
+    bossSpawnStep: 6,
+    finalBossTime: 10,
+    bossPool: ["fridgeBoss", "washerBoss", "microwaveBoss", "washerBoss"],
+    finalBoss: "titanHuman",
+    theme: {
+      skyTop: "#2c203d",
+      skyMid: "#6a4f78",
+      skyBottom: "#ff845d",
+      sunX: 960,
+      sunY: 148,
+      mountain: "#5b4550",
+      skyline: "#251b2d",
+      groundTop: "#c27f58",
+      groundBottom: "#6a3829",
+      accent: "#ff9e74",
+      melody: [261.63, 329.63, 392, 523.25, 659.25, 523.25, 392, 329.63],
+      bass: [130.81, 164.81, 196, 164.81],
+    },
+  },
+};
 const UNIT_ORDER = [
   "miniTank",
   "tank",
@@ -34,12 +321,13 @@ const UNIT_ORDER = [
   "laser",
   "drill",
   "angel",
+  "vipDragonFish",
 ];
 
 const UNIT_TYPES = {
   miniTank: {
     key: "miniTank",
-    label: "꼬마탱커냥",
+    label: "꼬마복어",
     cost: 10,
     hp: 140,
     damage: 8,
@@ -54,7 +342,7 @@ const UNIT_TYPES = {
   },
   tank: {
     key: "tank",
-    label: "탱크냥",
+    label: "방패메기",
     cost: 50,
     hp: 280,
     damage: 22,
@@ -69,7 +357,7 @@ const UNIT_TYPES = {
   },
   sword: {
     key: "sword",
-    label: "검사냥",
+    label: "청새치",
     cost: 90,
     hp: 170,
     damage: 40,
@@ -84,7 +372,7 @@ const UNIT_TYPES = {
   },
   cannon: {
     key: "cannon",
-    label: "캐논냥",
+    label: "포격금붕어",
     cost: 220,
     hp: 120,
     damage: 56,
@@ -100,7 +388,7 @@ const UNIT_TYPES = {
   },
   dash: {
     key: "dash",
-    label: "질주냥",
+    label: "질주고등어",
     cost: 120,
     hp: 120,
     damage: 34,
@@ -115,7 +403,7 @@ const UNIT_TYPES = {
   },
   battle: {
     key: "battle",
-    label: "전투냥",
+    label: "전투상어",
     cost: 200,
     hp: 150,
     damage: 62,
@@ -131,7 +419,7 @@ const UNIT_TYPES = {
   },
   guard: {
     key: "guard",
-    label: "방패냥",
+    label: "철갑가오리",
     cost: 130,
     hp: 360,
     damage: 16,
@@ -146,7 +434,7 @@ const UNIT_TYPES = {
   },
   ninja: {
     key: "ninja",
-    label: "닌자냥",
+    label: "닌자날치",
     cost: 150,
     hp: 110,
     damage: 42,
@@ -161,7 +449,7 @@ const UNIT_TYPES = {
   },
   giant: {
     key: "giant",
-    label: "거인냥",
+    label: "거대고래",
     cost: 320,
     hp: 520,
     damage: 68,
@@ -176,7 +464,7 @@ const UNIT_TYPES = {
   },
   sniper: {
     key: "sniper",
-    label: "저격냥",
+    label: "저격황새치",
     cost: 280,
     hp: 120,
     damage: 104,
@@ -192,7 +480,7 @@ const UNIT_TYPES = {
   },
   hammer: {
     key: "hammer",
-    label: "망치냥",
+    label: "망치상어",
     cost: 230,
     hp: 260,
     damage: 88,
@@ -207,7 +495,7 @@ const UNIT_TYPES = {
   },
   mage: {
     key: "mage",
-    label: "마법냥",
+    label: "마법베타",
     cost: 240,
     hp: 130,
     damage: 58,
@@ -223,7 +511,7 @@ const UNIT_TYPES = {
   },
   rocket: {
     key: "rocket",
-    label: "로켓냥",
+    label: "로켓참치",
     cost: 260,
     hp: 150,
     damage: 76,
@@ -239,7 +527,7 @@ const UNIT_TYPES = {
   },
   laser: {
     key: "laser",
-    label: "레이저냥",
+    label: "레이저이엘",
     cost: 340,
     hp: 160,
     damage: 92,
@@ -255,7 +543,7 @@ const UNIT_TYPES = {
   },
   drill: {
     key: "drill",
-    label: "드릴냥",
+    label: "드릴철갑상어",
     cost: 190,
     hp: 210,
     damage: 46,
@@ -270,7 +558,7 @@ const UNIT_TYPES = {
   },
   angel: {
     key: "angel",
-    label: "천사냥",
+    label: "천사엔젤피쉬",
     cost: 290,
     hp: 240,
     damage: 70,
@@ -284,12 +572,30 @@ const UNIT_TYPES = {
     size: 38,
     projectile: true,
   },
+  vipDragonFish: {
+    key: "vipDragonFish",
+    label: "사신의 신 물고기",
+    cost: 450,
+    hp: 420,
+    damage: 138,
+    speed: 44,
+    attackRange: 360,
+    cooldown: 0.86,
+    reach: 180,
+    color: "#fff6cf",
+    outline: "#342118",
+    accent: "#ffcc3d",
+    size: 52,
+    projectile: true,
+    vipOnly: true,
+    laserMouth: true,
+  },
 };
 
 const ENEMY_TYPES = [
   {
     key: "box",
-    name: "Box Bot",
+    name: "골목냥",
     hp: 130,
     damage: 20,
     speed: 42,
@@ -302,7 +608,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "kettle",
-    name: "Kettle Tank",
+    name: "주전자냥",
     hp: 240,
     damage: 34,
     speed: 30,
@@ -315,7 +621,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "speaker",
-    name: "Speaker Shot",
+    name: "스피커냥",
     hp: 110,
     damage: 26,
     speed: 56,
@@ -329,7 +635,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "lamp",
-    name: "Lamp Walker",
+    name: "램프냥",
     hp: 150,
     damage: 22,
     speed: 48,
@@ -342,7 +648,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "fan",
-    name: "Fan Spinner",
+    name: "선풍냥",
     hp: 180,
     damage: 28,
     speed: 66,
@@ -355,7 +661,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "vacuum",
-    name: "Vacuum Roll",
+    name: "청소냥",
     hp: 300,
     damage: 42,
     speed: 34,
@@ -368,7 +674,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "toaster",
-    name: "Toaster Pop",
+    name: "토스터냥",
     hp: 120,
     damage: 38,
     speed: 28,
@@ -382,7 +688,7 @@ const ENEMY_TYPES = [
   },
   {
     key: "clock",
-    name: "Clock Tick",
+    name: "시계냥",
     hp: 220,
     damage: 30,
     speed: 54,
@@ -395,10 +701,10 @@ const ENEMY_TYPES = [
   },
 ];
 
-const ENEMY_BOSS_TYPES = [
-  {
+const ENEMY_BOSS_TYPES = {
+  fridgeBoss: {
     key: "fridgeBoss",
-    name: "Fridge Titan",
+    name: "냉장고대장냥",
     hp: 1400,
     damage: 68,
     speed: 18,
@@ -410,9 +716,9 @@ const ENEMY_BOSS_TYPES = [
     accent: "#7fd7ff",
     boss: true,
   },
-  {
+  washerBoss: {
     key: "washerBoss",
-    name: "Washer Golem",
+    name: "세탁냥장군",
     hp: 1100,
     damage: 54,
     speed: 24,
@@ -425,9 +731,9 @@ const ENEMY_BOSS_TYPES = [
     projectile: true,
     boss: true,
   },
-  {
+  microwaveBoss: {
     key: "microwaveBoss",
-    name: "Microwave King",
+    name: "전자레인지왕냥",
     hp: 900,
     damage: 84,
     speed: 28,
@@ -439,21 +745,23 @@ const ENEMY_BOSS_TYPES = [
     accent: "#ff9b5c",
     boss: true,
   },
-];
+};
 
-const FINAL_BOSS_TYPE = {
-  key: "titanHuman",
-  name: "titan human",
-  hp: 725,
-  damage: 120,
-  speed: 18,
-  attackRange: 240,
-  cooldown: 0.96,
-  reach: 118,
-  size: 118,
-  color: "#8a8f99",
-  accent: "#ff4f4f",
-  boss: true,
+const FINAL_BOSS_TYPES = {
+  titanHuman: {
+    key: "titanHuman",
+    name: "타이탄 휴먼",
+    hp: 725,
+    damage: 120,
+    speed: 18,
+    attackRange: 240,
+    cooldown: 0.96,
+    reach: 118,
+    size: 118,
+    color: "#8a8f99",
+    accent: "#ff4f4f",
+    boss: true,
+  },
 };
 
 const WORLD = {
@@ -465,6 +773,9 @@ const WORLD = {
   enemyBaseX: 1164,
 };
 
+const fishImageCache = new Map();
+
+let selectedLevelKey = "meadow";
 const state = createInitialState();
 let rafId = 0;
 let lastTs = 0;
@@ -473,9 +784,101 @@ let audioCtx = null;
 let musicTimer = 0;
 let musicStep = 0;
 let musicEnabled = true;
+let baseLaserBeams = [];
+let gachaAnimating = false;
+let selectedSaveSlot = "slot1";
+let unlockedUnitKeys = loadUnlockedUnits();
+let billCount = loadBills();
+let redeemedCodes = loadRedeemedCodes();
+let vipUnlocked = loadVipStatus();
 
 function createSpawnCooldowns() {
   return Object.fromEntries(UNIT_ORDER.map((key) => [key, 0]));
+}
+
+function loadUnlockedUnits() {
+  try {
+    const raw = window.localStorage.getItem(`${UNLOCK_STORAGE_KEY}-${selectedSaveSlot}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const merged = [...new Set([...DEFAULT_UNLOCKED_UNITS, ...parsed])];
+    return UNIT_ORDER.filter((key) => merged.includes(key));
+  } catch {
+    return [...DEFAULT_UNLOCKED_UNITS];
+  }
+}
+
+function saveUnlockedUnits() {
+  try {
+    window.localStorage.setItem(`${UNLOCK_STORAGE_KEY}-${selectedSaveSlot}`, JSON.stringify(unlockedUnitKeys));
+  } catch {}
+}
+
+function loadBills() {
+  try {
+    const raw = window.localStorage.getItem(`${BILL_STORAGE_KEY}-${selectedSaveSlot}`);
+    return Math.max(0, Number.parseInt(raw || "0", 10) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function saveBills() {
+  try {
+    window.localStorage.setItem(`${BILL_STORAGE_KEY}-${selectedSaveSlot}`, String(billCount));
+  } catch {}
+}
+
+function loadRedeemedCodes() {
+  try {
+    const raw = window.localStorage.getItem(`${CODE_STORAGE_KEY}-${selectedSaveSlot}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRedeemedCodes() {
+  try {
+    window.localStorage.setItem(`${CODE_STORAGE_KEY}-${selectedSaveSlot}`, JSON.stringify(redeemedCodes));
+  } catch {}
+}
+
+function loadVipStatus() {
+  try {
+    return window.localStorage.getItem(`${VIP_STORAGE_KEY}-${selectedSaveSlot}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function saveVipStatus() {
+  try {
+    window.localStorage.setItem(`${VIP_STORAGE_KEY}-${selectedSaveSlot}`, vipUnlocked ? "true" : "false");
+  } catch {}
+}
+
+function selectSaveSlot(slotKey) {
+  selectedSaveSlot = slotKey;
+  unlockedUnitKeys = loadUnlockedUnits();
+  billCount = loadBills();
+  redeemedCodes = loadRedeemedCodes();
+  vipUnlocked = loadVipStatus();
+  for (const button of ui.saveButtons) {
+    button.classList.toggle("selected", button.dataset.save === slotKey);
+  }
+  renderUnlockRoster();
+  renderUnitButtons();
+  ui.gachaResult.textContent = `${slotKey.toUpperCase()} 사용 중. 기본 해금: 방패메기, 질주고등어, 천사엔젤피쉬`;
+  if (ui.codeResult) {
+    ui.codeResult.textContent = vipUnlocked
+      ? `VIP 활성화됨. 사용 가능한 코드 수: ${Object.keys(REDEEM_CODES).length}개`
+      : `사용 가능한 코드 수: ${Object.keys(REDEEM_CODES).length}개`;
+  }
+}
+
+function getAvailableUnitOrder() {
+  return UNIT_ORDER.filter((key) => unlockedUnitKeys.includes(key));
 }
 
 function getUnitTagline(type) {
@@ -496,17 +899,20 @@ function getUnitTagline(type) {
     laser: "340 · 최장 레이저",
     drill: "190 · 파고드는 전사",
     angel: "290 · 빛의 탄막",
+    vipDragonFish: "450 · 입에서 레이저를 쏘는 VIP 전용 신어",
   };
-  return taglines[type.key] || `${type.cost} · 고양이 출격`;
+  return taglines[type.key] || `${type.cost} · 물고기 출격`;
 }
 
 function renderUnitButtons() {
   const upgradeBtn = ui.upgradeBtn;
   upgradeBtn.remove();
+  ui.summonPanel.querySelectorAll(".unit-btn[data-unit]").forEach((button) => button.remove());
 
-  for (const key of UNIT_ORDER) {
+  const availableUnits = getAvailableUnitOrder();
+  for (const key of availableUnits) {
     const type = UNIT_TYPES[key];
-    const hotkey = KEY_BINDINGS[UNIT_ORDER.indexOf(key)] || "?";
+    const hotkey = KEY_BINDINGS[availableUnits.indexOf(key)] || "?";
     const button = document.createElement("button");
     button.className = "unit-btn";
     button.type = "button";
@@ -520,7 +926,115 @@ function renderUnitButtons() {
   ui.unitButtons = Array.from(document.querySelectorAll(".unit-btn[data-unit]"));
 }
 
+function renderUnlockRoster() {
+  ui.billCount.textContent = `보유 지폐: ${billCount}장`;
+  ui.unlockRoster.innerHTML = "";
+  for (const key of UNIT_ORDER) {
+    const chip = document.createElement("div");
+    const unlocked = unlockedUnitKeys.includes(key);
+    chip.className = `unlock-chip${unlocked ? "" : " locked"}`;
+    const vipTag = UNIT_TYPES[key].vipOnly ? " [VIP]" : "";
+    chip.textContent = `${unlocked ? "해금" : "잠금"} · ${UNIT_TYPES[key].label}${vipTag}`;
+    ui.unlockRoster.appendChild(chip);
+  }
+}
+
+function performGacha() {
+  if (gachaAnimating) {
+    return;
+  }
+  if (billCount < 1) {
+    ui.gachaResult.textContent = "지폐가 부족합니다. 레벨을 클리어해서 지폐를 모아보세요.";
+    return;
+  }
+  const pool = UNIT_ORDER.filter((key) => !DEFAULT_UNLOCKED_UNITS.includes(key) && !unlockedUnitKeys.includes(key));
+  if (pool.length === 0) {
+    ui.gachaResult.textContent = "모든 뽑기 유닛을 이미 해금했습니다.";
+    return;
+  }
+  gachaAnimating = true;
+  ui.gachaBtn.disabled = true;
+  ui.gachaBtn.classList.add("disabled");
+  ui.gachaResult.textContent = "통조림이 빛나고 있습니다...";
+  playGachaCanAnimation();
+
+  window.setTimeout(() => {
+    billCount -= 1;
+    saveBills();
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    unlockedUnitKeys = [...unlockedUnitKeys, picked];
+    saveUnlockedUnits();
+    renderUnlockRoster();
+    renderUnitButtons();
+    ui.gachaResult.textContent = `통조림이 열리며 ${UNIT_TYPES[picked].label} 해금!`;
+    ui.gachaBtn.disabled = false;
+    ui.gachaBtn.classList.remove("disabled");
+    gachaAnimating = false;
+  }, 1120);
+}
+
+function playGachaCanAnimation() {
+  if (!ui.gachaCanScene) {
+    return;
+  }
+  ui.gachaCanScene.classList.remove("is-opening");
+  void ui.gachaCanScene.offsetWidth;
+  ui.gachaCanScene.classList.add("is-opening");
+  window.setTimeout(() => {
+    ui.gachaCanScene.classList.remove("is-opening");
+  }, 1180);
+}
+
+function redeemCode() {
+  if (!ui.codeInput || !ui.codeResult) {
+    return;
+  }
+  const code = ui.codeInput.value.trim().toUpperCase();
+  if (!code) {
+    ui.codeResult.textContent = "코드를 입력해 주세요.";
+    return;
+  }
+  if (redeemedCodes.includes(code)) {
+    ui.codeResult.textContent = "이미 사용한 코드입니다.";
+    return;
+  }
+  const reward = REDEEM_CODES[code];
+  if (!reward) {
+    ui.codeResult.textContent = "없는 코드입니다.";
+    return;
+  }
+
+  if (reward.type === "bills") {
+    billCount += reward.amount;
+    saveBills();
+  }
+  if (reward.type === "unlock" && reward.unit && !unlockedUnitKeys.includes(reward.unit)) {
+    unlockedUnitKeys = [...unlockedUnitKeys, reward.unit];
+    saveUnlockedUnits();
+  }
+  if (reward.bonusBills) {
+    billCount += reward.bonusBills;
+    saveBills();
+  }
+  if (reward.type === "vip") {
+    vipUnlocked = true;
+    saveVipStatus();
+    if (reward.unit && !unlockedUnitKeys.includes(reward.unit)) {
+      unlockedUnitKeys = [...unlockedUnitKeys, reward.unit];
+      saveUnlockedUnits();
+    }
+  }
+
+  redeemedCodes = [...redeemedCodes, code];
+  saveRedeemedCodes();
+  renderUnlockRoster();
+  renderUnitButtons();
+  ui.codeInput.value = "";
+  ui.codeResult.textContent = `${code} 성공! ${reward.message}`;
+}
+
 function createInitialState() {
+  const level = LEVELS[selectedLevelKey];
   return {
     mode: "ready",
     elapsed: 0,
@@ -537,12 +1051,15 @@ function createInitialState() {
     units: [],
     enemyUnits: [],
     projectiles: [],
-    enemySpawnTimer: 3.4,
+    selectedLevelKey,
+    enemySpawnTimer: level.enemySpawnBase,
     enemyWave: 0,
-    bossSpawnTimer: 38,
+    bossSpawnTimer: level.bossSpawnStart,
     bossesSpawned: 0,
-    finalBossTimer: 20,
+    finalBossTimer: level.finalBossTime,
     finalBossSpawned: false,
+    baseLaserCooldown: 0,
+    rewardGranted: false,
     dust: [],
   };
 }
@@ -550,9 +1067,10 @@ function createInitialState() {
 function resetState() {
   const fresh = createInitialState();
   nextUnitId = 1;
+  baseLaserBeams = [];
   Object.keys(state).forEach((key) => delete state[key]);
   Object.assign(state, fresh);
-  setOverlay("전투 준비", "버튼이나 숫자키로 유닛을 뽑아 적 기지를 밀어보세요.", true);
+  setOverlay("전투 준비", "버튼이나 숫자키로 물고기를 뽑아 적 기지를 밀어보세요.", true);
   syncHud();
   render();
 }
@@ -560,10 +1078,32 @@ function resetState() {
 function startGame() {
   resetState();
   state.mode = "playing";
-  state.message = "아군 출격! 코스트를 모아 라인을 밀어내세요.";
+  state.message = `${LEVELS[selectedLevelKey].name} 시작! 코스트를 모아 라인을 밀어내세요.`;
   setOverlay("", "", false);
+  ui.launchScreen.classList.add("hidden");
   ensureMusic();
   syncHud();
+}
+
+function returnToLaunch() {
+  state.mode = "ready";
+  setOverlay("전투 준비", "레벨을 다시 고르고 처음부터 출격하세요.", true);
+  ui.launchScreen.classList.remove("hidden");
+  state.message = "메인 화면으로 돌아왔습니다.";
+  syncHud();
+  render();
+}
+
+function selectLevel(levelKey) {
+  if (!LEVELS[levelKey]) {
+    return;
+  }
+  selectedLevelKey = levelKey;
+  for (const button of ui.levelButtons) {
+    button.classList.toggle("selected", button.dataset.level === levelKey);
+  }
+  state.message = `${LEVELS[levelKey].name} 선택됨`;
+  ui.statusText.textContent = state.message;
 }
 
 function spawnPlayerUnit(typeKey) {
@@ -649,7 +1189,9 @@ function spawnEnemy() {
 }
 
 function spawnBoss() {
-  const type = ENEMY_BOSS_TYPES[state.bossesSpawned % ENEMY_BOSS_TYPES.length];
+  const level = LEVELS[state.selectedLevelKey];
+  const bossKey = level.bossPool[state.bossesSpawned % level.bossPool.length];
+  const type = ENEMY_BOSS_TYPES[bossKey];
   const boss = createUnit(type, "enemy");
   state.enemyUnits.push(boss);
   state.bossesSpawned += 1;
@@ -658,10 +1200,11 @@ function spawnBoss() {
 }
 
 function spawnFinalBoss() {
-  const boss = createUnit(FINAL_BOSS_TYPE, "enemy");
+  const finalBossType = FINAL_BOSS_TYPES[LEVELS[state.selectedLevelKey].finalBoss];
+  const boss = createUnit(finalBossType, "enemy");
   state.enemyUnits.push(boss);
   state.finalBossSpawned = true;
-  state.message = "최종보스 등장! titan human이 전장에 강림했습니다.";
+  state.message = `최종보스 등장! ${finalBossType.name}이 전장에 강림했습니다.`;
   triggerBossEntrance(boss);
 }
 
@@ -711,20 +1254,23 @@ function update(dt) {
   Object.keys(state.spawnCooldowns).forEach((key) => {
     state.spawnCooldowns[key] = Math.max(0, state.spawnCooldowns[key] - dt);
   });
+  state.baseLaserCooldown = Math.max(0, state.baseLaserCooldown - dt);
+  updateBaseLaserBeams(dt);
 
   tickMusic(dt);
 
   state.enemySpawnTimer -= dt;
   if (state.enemySpawnTimer <= 0) {
     spawnEnemy();
-    const tension = Math.max(1.25, 3.2 - state.elapsed * 0.018);
+    const level = LEVELS[state.selectedLevelKey];
+    const tension = Math.max(level.enemySpawnMin, level.enemySpawnBase - state.elapsed * level.enemySpawnDecay);
     state.enemySpawnTimer = tension + Math.random() * 0.7;
   }
 
   state.bossSpawnTimer -= dt;
   if (state.bossSpawnTimer <= 0) {
     spawnBoss();
-    state.bossSpawnTimer = 44 + state.bossesSpawned * 10;
+    state.bossSpawnTimer = LEVELS[state.selectedLevelKey].bossSpawnStart + state.bossesSpawned * LEVELS[state.selectedLevelKey].bossSpawnStep;
   }
 
   if (!state.finalBossSpawned) {
@@ -767,16 +1313,21 @@ function updateArmy(allies, enemies, enemyBase, dt) {
     unit.attackTimer = unit.cooldown;
 
     if (unit.projectile) {
+      const isMouthLaser = unit.type === "vipDragonFish";
       state.projectiles.push({
-        x: unit.x + unit.dir * (unit.size * 0.55),
-        y: unit.y - unit.size * 0.6,
+        x: unit.x + unit.dir * (isMouthLaser ? unit.size * 0.78 : unit.size * 0.55),
+        y: unit.y - unit.size * (isMouthLaser ? 0.16 : 0.6),
         dir: unit.dir,
-        speed: 250,
+        speed: isMouthLaser ? 520 : 250,
         damage: unit.damage,
-        rangeLeft: unit.attackRange + 80,
+        rangeLeft: unit.attackRange + (isMouthLaser ? 150 : 80),
         team: unit.team,
-        color: unit.accent,
-        radius: 8,
+        color: isMouthLaser ? "#7ce9ff" : unit.accent,
+        radius: isMouthLaser ? 14 : 8,
+        beam: isMouthLaser,
+        width: isMouthLaser ? 10 : 0,
+        hitIds: [],
+        baseHit: false,
       });
     } else {
       target.hp -= unit.damage;
@@ -813,6 +1364,39 @@ function updateProjectiles(dt) {
     const targets = projectile.team === "player" ? state.enemyUnits : state.units;
     const base = projectile.team === "player" ? state.enemyBase : state.playerBase;
     const baseX = projectile.team === "player" ? WORLD.enemyBaseX : WORLD.playerBaseX;
+
+    if (projectile.beam) {
+      for (const target of targets) {
+        if (projectile.hitIds.includes(target.id)) {
+          continue;
+        }
+        if (Math.abs(projectile.x - target.x) <= target.size * 0.8) {
+          target.hp -= projectile.damage;
+          projectile.hitIds.push(target.id);
+          state.dust.push({
+            x: target.x,
+            y: target.y - target.size * 0.6,
+            life: 0.3,
+            radius: target.boss ? 34 : 26,
+            color: projectile.color,
+          });
+        }
+      }
+
+      if (!projectile.baseHit && Math.abs(projectile.x - baseX) < 46) {
+        base.hp -= projectile.damage;
+        projectile.baseHit = true;
+        projectile.rangeLeft = -1;
+        state.dust.push({
+          x: baseX,
+          y: WORLD.laneY - 64,
+          life: 0.36,
+          radius: 30,
+          color: projectile.color,
+        });
+      }
+      continue;
+    }
 
     let hit = null;
     for (const target of targets) {
@@ -859,6 +1443,13 @@ function updateDust(dt) {
   state.dust = state.dust.filter((puff) => puff.life > 0);
 }
 
+function updateBaseLaserBeams(dt) {
+  for (const beam of baseLaserBeams) {
+    beam.life -= dt;
+  }
+  baseLaserBeams = baseLaserBeams.filter((beam) => beam.life > 0);
+}
+
 function cleanDeadUnits() {
   state.units = state.units.filter((unit) => unit.hp > 0);
   state.enemyUnits = state.enemyUnits.filter((unit) => unit.hp > 0);
@@ -875,8 +1466,14 @@ function checkGameOver() {
   } else if (state.enemyBase.hp <= 0) {
     state.mode = "gameover";
     state.winner = "player";
+    if (!state.rewardGranted) {
+      billCount += 1;
+      saveBills();
+      state.rewardGranted = true;
+    }
     state.message = "승리! 적 기지를 무너뜨렸습니다.";
-    setOverlay("승리", "고양이 군단이 적 기지를 파괴했습니다. R을 눌러 다시 시작하세요.", true);
+    renderUnlockRoster();
+    setOverlay("승리", "물고기 군단이 적 기지를 파괴했습니다. 지폐 1장을 획득했습니다. R을 눌러 다시 시작하세요.", true);
   }
 }
 
@@ -886,6 +1483,8 @@ function syncHud() {
   ui.resourceText.textContent = `${Math.floor(state.cost)} / ${state.maxCost} · +${state.income}/s`;
   ui.statusText.textContent = state.message;
   ui.upgradeCostText.textContent = `${state.incomeUpgradeCost}`;
+  ui.baseLaserBtn.textContent = state.baseLaserCooldown > 0 ? `E. 레이저 ${Math.ceil(state.baseLaserCooldown)}s` : "E. 베이스 레이저";
+  ui.baseLaserBtn.classList.toggle("disabled", state.baseLaserCooldown > 0 || state.mode !== "playing");
 
   for (const btn of ui.unitButtons) {
     const type = UNIT_TYPES[btn.dataset.unit];
@@ -941,13 +1540,14 @@ function tickMusic(dt) {
 }
 
 function playMusicStep(step) {
-  const melody = [392, 440, 523.25, 440, 392, 440, 587.33, 523.25, 392, 440, 523.25, 659.25, 587.33, 523.25, 440, 392];
-  const bass = [196, 196, 220, 220, 174.61, 174.61, 196, 196];
+  const theme = LEVELS[state.selectedLevelKey].theme;
+  const melody = theme.melody;
+  const bass = theme.bass;
   const now = audioCtx.currentTime + 0.02;
 
-  playPianoNote(melody[step % melody.length], now, 0.62, 0.18);
+  playPianoNote(melody[step % melody.length], now, 0.62, 0.16);
   if (step % 2 === 0) {
-    playPianoNote(bass[step % bass.length], now, 0.9, 0.12);
+    playPianoNote(bass[step % bass.length], now, 0.9, 0.11);
   }
 }
 
@@ -1076,11 +1676,90 @@ function drawBase(x, team, hpRatio) {
   ctx.arc(x, top + 78, 18, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillRect(x - 6, top + 92, 12, 28);
+  if (team === "player") {
+    ctx.fillStyle = "#61b9ff";
+    ctx.fillRect(x + 18, top + 52, 30, 10);
+    ctx.fillRect(x + 42, top + 48, 10, 18);
+  }
 
   ctx.fillStyle = "rgba(0,0,0,0.18)";
   ctx.fillRect(left + 12, top - 20, width - 24, 10);
   ctx.fillStyle = team === "player" ? "#4ac779" : "#ff7e6a";
   ctx.fillRect(left + 12, top - 20, (width - 24) * hpRatio, 10);
+}
+
+function getFishSprite(unit) {
+  const cacheKey = `${unit.type}-${unit.color}-${unit.accent}`;
+  if (fishImageCache.has(cacheKey)) {
+    return fishImageCache.get(cacheKey);
+  }
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 120">
+      <defs>
+        <linearGradient id="body" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${unit.color}"/>
+          <stop offset="100%" stop-color="${unit.accent}"/>
+        </linearGradient>
+        <linearGradient id="fin" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${unit.accent}"/>
+          <stop offset="100%" stop-color="${unit.outline}"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="112" cy="104" rx="58" ry="10" fill="rgba(0,0,0,0.12)"/>
+      <path d="M36 61 C16 36, 16 18, 46 16 C58 8, 76 6, 95 10 C136 3, 181 20, 194 47 C206 72, 177 99, 130 102 C95 113, 56 104, 42 90 C18 90, 16 76, 36 61Z" fill="url(#body)" stroke="${unit.outline}" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M28 60 L6 35 L14 60 L6 86 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M94 20 L112 2 L124 26 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M86 92 L104 114 L118 90 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M138 34 C158 30, 176 40, 182 54 C171 50, 158 51, 143 58 Z" fill="#ffffff" fill-opacity="0.28"/>
+      <circle cx="162" cy="52" r="9" fill="#ffffff"/>
+      <circle cx="165" cy="52" r="4.6" fill="${unit.outline}"/>
+      <path d="M175 61 Q186 65 194 59" stroke="${unit.outline}" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <path d="M96 28 Q125 46 98 72" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3"/>
+      <path d="M68 34 Q94 52 68 82" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+      <path d="M46 42 Q70 56 48 76" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="3"/>
+    </svg>
+  `;
+
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  fishImageCache.set(cacheKey, image);
+  return image;
+}
+
+function drawFallbackFish(unit) {
+  ctx.scale(unit.dir, 1);
+  ctx.strokeStyle = unit.outline;
+  ctx.lineWidth = 3.5;
+  ctx.fillStyle = "rgba(43, 26, 18, 0.12)";
+  ctx.beginPath();
+  ctx.ellipse(0, unit.size * 0.56, unit.size * 0.96, unit.size * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = unit.color;
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.84, -unit.size * 0.1);
+  ctx.quadraticCurveTo(-unit.size * 0.5, -unit.size * 0.9, unit.size * 0.1, -unit.size * 0.7);
+  ctx.quadraticCurveTo(unit.size * 0.8, -unit.size * 0.48, unit.size * 0.92, -unit.size * 0.04);
+  ctx.quadraticCurveTo(unit.size * 0.82, unit.size * 0.36, unit.size * 0.1, unit.size * 0.42);
+  ctx.quadraticCurveTo(-unit.size * 0.54, unit.size * 0.42, -unit.size * 0.84, -unit.size * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.88, -unit.size * 0.02);
+  ctx.lineTo(-unit.size * 1.2, -unit.size * 0.34);
+  ctx.lineTo(-unit.size * 1.08, -unit.size * 0.02);
+  ctx.lineTo(-unit.size * 1.2, unit.size * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.beginPath();
+  ctx.ellipse(unit.size * 0.18, -unit.size * 0.26, unit.size * 0.24, unit.size * 0.11, -0.18, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawUnit(unit) {
@@ -1091,100 +1770,42 @@ function drawUnit(unit) {
 
   const bounce = Math.sin(unit.bob) * 3;
   const y = unit.y + bounce;
-  const facing = unit.dir;
   ctx.save();
   ctx.translate(unit.x, y);
-  ctx.scale(facing, 1);
 
-  ctx.strokeStyle = unit.outline;
-  ctx.lineWidth = 4;
-
-  ctx.fillStyle = "rgba(43, 26, 18, 0.12)";
-  ctx.beginPath();
-  ctx.ellipse(0, unit.size * 0.4, unit.size * 0.72, unit.size * 0.18, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = unit.color;
-  ctx.beginPath();
-  ctx.moveTo(-unit.size * 0.28, -unit.size * 1.46);
-  ctx.lineTo(-unit.size * 0.08, -unit.size * 1.9);
-  ctx.lineTo(unit.size * 0.04, -unit.size * 1.42);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(unit.size * 0.28, -unit.size * 1.46);
-  ctx.lineTo(unit.size * 0.08, -unit.size * 1.9);
-  ctx.lineTo(-unit.size * 0.04, -unit.size * 1.42);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = unit.color;
-  roundedRectPath(-unit.size * 0.55, -unit.size * 1.15, unit.size * 1.1, unit.size * 0.95, 16);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(0, -unit.size * 1.24, unit.size * 0.48, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = unit.outline;
-  ctx.beginPath();
-  ctx.arc(-unit.size * 0.14, -unit.size * 1.28, 4, 0, Math.PI * 2);
-  ctx.arc(unit.size * 0.14, -unit.size * 1.28, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, -unit.size * 1.18);
-  ctx.lineTo(0, -unit.size * 1.05);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.08);
-  ctx.quadraticCurveTo(0, -unit.size * 0.98, unit.size * 0.08, -unit.size * 1.08);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.1);
-  ctx.lineTo(-unit.size * 0.34, -unit.size * 1.16);
-  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.04);
-  ctx.lineTo(-unit.size * 0.34, -unit.size * 1.02);
-  ctx.moveTo(unit.size * 0.08, -unit.size * 1.1);
-  ctx.lineTo(unit.size * 0.34, -unit.size * 1.16);
-  ctx.moveTo(unit.size * 0.08, -unit.size * 1.04);
-  ctx.lineTo(unit.size * 0.34, -unit.size * 1.02);
-  ctx.stroke();
-
-  ctx.fillStyle = unit.color;
-  ctx.beginPath();
-  ctx.arc(-unit.size * 0.22, -unit.size * 0.08, unit.size * 0.12, 0, Math.PI * 2);
-  ctx.arc(unit.size * 0.22, -unit.size * 0.08, unit.size * 0.12, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(-unit.size * 0.34, -unit.size * 0.54);
-  ctx.quadraticCurveTo(-unit.size * 0.86, -unit.size * 0.86, -unit.size * 0.74, -unit.size * 0.18);
-  ctx.stroke();
+  const sprite = getFishSprite(unit);
+  if (sprite.complete) {
+    ctx.save();
+    ctx.scale(unit.dir, 1);
+    ctx.fillStyle = "rgba(43, 26, 18, 0.12)";
+    ctx.beginPath();
+    ctx.ellipse(0, unit.size * 0.56, unit.size * 0.96, unit.size * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.drawImage(sprite, -unit.size * 1.28, -unit.size * 1.02, unit.size * 2.56, unit.size * 1.62);
+    ctx.restore();
+  } else {
+    drawFallbackFish(unit);
+  }
 
   ctx.fillStyle = unit.accent;
-  ctx.fillRect(unit.size * 0.06, -unit.size * 0.84, unit.reach, 10);
+  ctx.fillRect(unit.size * 0.12, -unit.size * 0.48, unit.reach, 10);
   ctx.fillStyle = unit.outline;
-  ctx.fillRect(unit.size * 0.06 + unit.reach - 10, -unit.size * 0.9, 14, 20);
+  ctx.fillRect(unit.size * 0.12 + unit.reach - 10, -unit.size * 0.56, 14, 20);
 
   ctx.fillStyle = "rgba(0,0,0,0.16)";
-  ctx.fillRect(-unit.size * 0.58, unit.size * 0.12, unit.size * 1.16, 7);
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.56, unit.size * 1.16, 7);
   ctx.fillStyle = "#57d17b";
-  ctx.fillRect(-unit.size * 0.58, unit.size * 0.12, unit.size * 1.16 * (unit.hp / unit.maxHp), 7);
+  ctx.fillRect(-unit.size * 0.58, unit.size * 0.56, unit.size * 1.16 * (unit.hp / unit.maxHp), 7);
   ctx.restore();
-  drawUnitName(unit, y - unit.size * 1.92);
+  drawUnitName(unit, y - unit.size * 1.3);
 }
 
 function drawEnemyObject(unit) {
+  if (!unit.boss) {
+    drawEnemyCat(unit);
+    return;
+  }
+
   const bounce = Math.sin(unit.bob) * 2;
   const y = unit.y + bounce;
   ctx.save();
@@ -1457,11 +2078,139 @@ function drawEnemyObject(unit) {
   drawUnitName(unit, y - unit.size * 1.58);
 }
 
+function drawEnemyCat(unit) {
+  const bounce = Math.sin(unit.bob) * 2.5;
+  const y = unit.y + bounce;
+  ctx.save();
+  ctx.translate(unit.x, y);
+  ctx.scale(unit.dir, 1);
+  ctx.strokeStyle = unit.outline;
+  ctx.lineWidth = 3.5;
+
+  ctx.fillStyle = "rgba(20, 18, 18, 0.16)";
+  ctx.beginPath();
+  ctx.ellipse(0, unit.size * 0.5, unit.size * 0.82, unit.size * 0.18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = unit.color;
+  roundedRectPath(-unit.size * 0.5, -unit.size * 0.84, unit.size * 0.92, unit.size * 0.5, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(unit.size * 0.24, -unit.size * 0.82, unit.size * 0.24, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.08, -unit.size * 0.98);
+  ctx.lineTo(unit.size * 0.16, -unit.size * 1.22);
+  ctx.lineTo(unit.size * 0.3, -unit.size * 1.02);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.42, -unit.size * 0.98);
+  ctx.lineTo(unit.size * 0.34, -unit.size * 1.22);
+  ctx.lineTo(unit.size * 0.22, -unit.size * 1.02);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#fff8f5";
+  ctx.beginPath();
+  ctx.arc(unit.size * 0.18, -unit.size * 0.84, unit.size * 0.05, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.34, -unit.size * 0.84, unit.size * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = unit.outline;
+  ctx.beginPath();
+  ctx.arc(unit.size * 0.18, -unit.size * 0.84, unit.size * 0.022, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.34, -unit.size * 0.84, unit.size * 0.022, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.26, -unit.size * 0.74);
+  ctx.lineTo(unit.size * 0.26, -unit.size * 0.68);
+  ctx.moveTo(unit.size * 0.18, -unit.size * 0.72);
+  ctx.quadraticCurveTo(unit.size * 0.26, -unit.size * 0.64, unit.size * 0.34, -unit.size * 0.72);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.3, -unit.size * 0.72);
+  ctx.quadraticCurveTo(-unit.size * 0.7, -unit.size * 1.02, -unit.size * 0.58, -unit.size * 0.42);
+  ctx.stroke();
+
+  for (const legX of [-0.2, -0.02, 0.14, 0.3]) {
+    ctx.beginPath();
+    ctx.moveTo(unit.size * legX, -unit.size * 0.38);
+    ctx.lineTo(unit.size * legX, unit.size * 0.18);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = unit.accent;
+  ctx.fillRect(unit.size * 0.42, -unit.size * 0.66, unit.reach, 8);
+  ctx.fillStyle = unit.outline;
+  ctx.fillRect(unit.size * 0.42 + unit.reach - 10, -unit.size * 0.72, 12, 16);
+
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(-unit.size * 0.56, unit.size * 0.24, unit.size * 1.12, 7);
+  ctx.fillStyle = "#ff7e6a";
+  ctx.fillRect(-unit.size * 0.56, unit.size * 0.24, unit.size * 1.12 * (unit.hp / unit.maxHp), 7);
+  ctx.restore();
+  drawUnitName(unit, y - unit.size * 1.5);
+}
+
 function drawProjectile(projectile) {
+  if (projectile.beam) {
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.strokeStyle = projectile.color;
+    ctx.lineWidth = projectile.width;
+    ctx.beginPath();
+    ctx.moveTo(projectile.x - projectile.dir * 46, projectile.y);
+    ctx.lineTo(projectile.x + projectile.dir * 54, projectile.y);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(214, 250, 255, 0.9)";
+    ctx.lineWidth = Math.max(4, projectile.width * 0.42);
+    ctx.beginPath();
+    ctx.moveTo(projectile.x - projectile.dir * 38, projectile.y);
+    ctx.lineTo(projectile.x + projectile.dir * 46, projectile.y);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
   ctx.fillStyle = projectile.color;
   ctx.beginPath();
   ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function drawBaseLaserBeams() {
+  for (const beam of baseLaserBeams) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, beam.life * 1.8);
+    ctx.strokeStyle = beam.color;
+    ctx.lineWidth = beam.width;
+    ctx.beginPath();
+    ctx.moveTo(beam.fromX, beam.fromY);
+    ctx.lineTo(beam.toX, beam.toY);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(120, 226, 255, 0.55)";
+    ctx.lineWidth = beam.width + 18;
+    ctx.beginPath();
+    ctx.moveTo(beam.fromX, beam.fromY);
+    ctx.lineTo(beam.toX, beam.toY);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = Math.max(2, beam.width * 0.28);
+    ctx.beginPath();
+    ctx.moveTo(beam.fromX, beam.fromY);
+    ctx.lineTo(beam.toX, beam.toY);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawDust() {
@@ -1476,20 +2225,21 @@ function drawDust() {
 }
 
 function drawBackground() {
+  const theme = LEVELS[state.selectedLevelKey].theme;
   const sky = ctx.createLinearGradient(0, 0, 0, WORLD.height);
-  sky.addColorStop(0, "#6cc8ff");
-  sky.addColorStop(0.4, "#b6e5ff");
-  sky.addColorStop(0.68, "#ffe1a6");
-  sky.addColorStop(1, "#cc7640");
+  sky.addColorStop(0, theme.skyTop);
+  sky.addColorStop(0.4, theme.skyMid);
+  sky.addColorStop(0.68, theme.skyBottom);
+  sky.addColorStop(1, theme.groundBottom);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WORLD.width, WORLD.height);
 
-  const sun = ctx.createRadialGradient(980, 120, 10, 980, 120, 120);
-  sun.addColorStop(0, "rgba(255, 250, 220, 0.95)");
+  const sun = ctx.createRadialGradient(theme.sunX, theme.sunY, 10, theme.sunX, theme.sunY, 120);
+  sun.addColorStop(0, theme.accent);
   sun.addColorStop(1, "rgba(255, 250, 220, 0)");
   ctx.fillStyle = sun;
   ctx.beginPath();
-  ctx.arc(980, 120, 120, 0, Math.PI * 2);
+  ctx.arc(theme.sunX, theme.sunY, 120, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "rgba(255,255,255,0.5)";
@@ -1500,7 +2250,7 @@ function drawBackground() {
     ctx.fill();
   }
 
-  ctx.fillStyle = "#a78a70";
+  ctx.fillStyle = theme.mountain;
   ctx.beginPath();
   ctx.moveTo(0, 350);
   ctx.lineTo(120, 280);
@@ -1517,7 +2267,7 @@ function drawBackground() {
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = "#7d6170";
+  ctx.fillStyle = theme.skyline;
   for (let i = 0; i < 11; i += 1) {
     const x = 18 + i * 118;
     const w = 44 + (i % 3) * 18;
@@ -1526,11 +2276,11 @@ function drawBackground() {
     ctx.fillRect(x + w * 0.2, 360 - h - 22, 12, 22);
   }
 
-  ctx.fillStyle = "#c99461";
+  ctx.fillStyle = theme.groundBottom;
   ctx.fillRect(0, WORLD.laneY - 8, WORLD.width, WORLD.height - WORLD.laneY + 8);
-  ctx.fillStyle = "#f1bf7f";
+  ctx.fillStyle = theme.groundTop;
   ctx.fillRect(0, WORLD.laneY - 18, WORLD.width, 16);
-  ctx.fillStyle = "#dca86d";
+  ctx.fillStyle = theme.groundTop;
   ctx.fillRect(0, WORLD.laneY - 62, WORLD.width, 44);
   ctx.fillStyle = "#8a5433";
   ctx.fillRect(0, WORLD.laneY + 72, WORLD.width, 8);
@@ -1549,6 +2299,7 @@ function render() {
   drawBackground();
   drawBase(WORLD.playerBaseX, "player", state.playerBase.hp / state.playerBase.maxHp);
   drawBase(WORLD.enemyBaseX, "enemy", state.enemyBase.hp / state.enemyBase.maxHp);
+  drawBaseLaserBeams();
 
   const allUnits = [...state.units, ...state.enemyUnits].sort((a, b) => a.y - b.y || a.x - b.x);
   for (const unit of allUnits) {
@@ -1602,11 +2353,14 @@ function roundedRectPath(x, y, width, height, radius) {
 
 function handleKey(event) {
   const key = event.key.toLowerCase();
+  const availableUnits = getAvailableUnitOrder();
   const bindingIndex = KEY_BINDINGS.indexOf(key);
-  if (bindingIndex !== -1 && UNIT_ORDER[bindingIndex]) {
-    spawnPlayerUnit(UNIT_ORDER[bindingIndex]);
+  if (bindingIndex !== -1 && availableUnits[bindingIndex]) {
+    spawnPlayerUnit(availableUnits[bindingIndex]);
   } else if (key === "q") {
     upgradeIncome();
+  } else if (key === "e") {
+    fireBaseLaser();
   } else if (key === "m") {
     toggleMusic();
   } else if (key === "r") {
@@ -1614,6 +2368,51 @@ function handleKey(event) {
   } else if (key === "f") {
     toggleFullscreen();
   }
+}
+
+function fireBaseLaser() {
+  if (state.mode !== "playing") {
+    return;
+  }
+  if (state.baseLaserCooldown > 0) {
+    state.message = "베이스 레이저 충전 중입니다.";
+    syncHud();
+    return;
+  }
+
+  const targets = [...state.enemyUnits];
+  const originX = WORLD.playerBaseX + 48;
+  const originY = WORLD.laneY - 84;
+  const beamY = WORLD.laneY - 78;
+  baseLaserBeams.push({
+    fromX: originX,
+    fromY: originY,
+    toX: WORLD.enemyBaseX - 14,
+    toY: beamY,
+    width: 30,
+    life: 0.95,
+    color: "#41c8ff",
+  });
+
+  if (targets.length === 0) {
+    state.enemyBase.hp -= 120;
+  } else {
+    for (const target of targets) {
+      target.hp -= target.boss ? 180 : 120;
+      state.dust.push({
+        x: target.x,
+        y: target.y - target.size * 0.5,
+        life: 0.38,
+        radius: target.boss ? 42 : 26,
+        color: "#88ebff",
+      });
+    }
+    state.enemyBase.hp -= 40;
+  }
+
+  state.baseLaserCooldown = 16;
+  state.message = "베이스 레이저 발사!";
+  syncHud();
 }
 
 async function toggleFullscreen() {
@@ -1625,11 +2424,36 @@ async function toggleFullscreen() {
 }
 
 renderUnitButtons();
+renderUnlockRoster();
+ui.saveButtons.forEach((button) => {
+  button.addEventListener("click", () => selectSaveSlot(button.dataset.save));
+});
+ui.levelButtons.forEach((button) => {
+  button.addEventListener("click", () => selectLevel(button.dataset.level));
+});
 ui.startBtn.addEventListener("click", startGame);
+ui.homeBtn.addEventListener("click", returnToLaunch);
+ui.launchStartBtn.addEventListener("click", startGame);
+ui.gachaBtn.addEventListener("click", performGacha);
+if (ui.codeBtn) {
+  ui.codeBtn.addEventListener("click", redeemCode);
+}
+if (ui.codeInput) {
+  ui.codeInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      redeemCode();
+    }
+  });
+}
 ui.upgradeBtn.addEventListener("click", upgradeIncome);
+ui.baseLaserBtn.addEventListener("click", fireBaseLaser);
 window.addEventListener("keydown", handleKey);
 document.addEventListener("fullscreenchange", render);
 document.addEventListener("pointerdown", ensureMusic, { once: true });
+
+if (ui.codeResult) {
+  ui.codeResult.textContent = `사용 가능한 코드 수: ${Object.keys(REDEEM_CODES).length}개`;
+}
 
 window.render_game_to_text = () =>
   JSON.stringify({
