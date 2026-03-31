@@ -46,6 +46,7 @@ const REDEEM_CODES = {
   CATRAIN: { type: "unlock", unit: "battle", message: "전투상어가 즉시 해금되었습니다." },
   OCEANKING: { type: "unlock", unit: "giant", bonusBills: 3, message: "거대고래 해금 + 지폐 3장을 받았습니다." },
   "0907": { type: "vip", unit: "vipDragonFish", message: "VIP 패스와 전용 물고기 사신의 신 물고기를 획득했습니다." },
+  KINGKONG: { type: "unlock", unit: "devNukeFish", message: "개발자용 핵물고기를 획득했습니다." },
 };
 const LEVELS = {
   meadow: {
@@ -306,6 +307,36 @@ const LEVELS = {
       accent: "#ff9e74",
       melody: [261.63, 329.63, 392, 523.25, 659.25, 523.25, 392, 329.63],
       bass: [130.81, 164.81, 196, 164.81],
+    },
+  },
+  titanInvasion: {
+    key: "titanInvasion",
+    name: "고양이 타이탄 침입",
+    enemySpawnBase: 2.35,
+    enemySpawnMin: 0.82,
+    enemySpawnDecay: 0.028,
+    bossSpawnStart: 0.1,
+    bossSpawnStep: 0,
+    finalBossTime: null,
+    bossPool: ["nyaongTitan"],
+    finalBoss: null,
+    openingCinematic: "catTitanMerge",
+    openingBosses: ["nyaongTitan"],
+    openingBossCount: 50,
+    hideFinalBossTimer: true,
+    theme: {
+      skyTop: "#1d1a30",
+      skyMid: "#4d3d73",
+      skyBottom: "#ff7d67",
+      sunX: 980,
+      sunY: 126,
+      mountain: "#59475e",
+      skyline: "#1b1930",
+      groundTop: "#ca8558",
+      groundBottom: "#642f27",
+      accent: "#ff564f",
+      melody: [261.63, 392, 523.25, 698.46, 659.25, 587.33, 523.25, 392],
+      bass: [130.81, 196, 261.63, 196],
     },
   },
 };
@@ -674,10 +705,33 @@ EXTRA_FISH_UNITS.bombPuffer = {
   selfDestruct: true,
   splashRadius: 120,
 };
+EXTRA_FISH_UNITS.devNukeFish = {
+  key: "devNukeFish",
+  label: "개발자용 핵물고기",
+  cost: 200,
+  hp: 6400,
+  damage: 3200,
+  speed: 96,
+  attackRange: 760,
+  cooldown: 0.12,
+  reach: 320,
+  color: "#f7fff0",
+  outline: "#342118",
+  accent: "#7dff4f",
+  size: 82,
+  projectile: true,
+  beam: true,
+  laserMouth: true,
+  devOnly: true,
+  codeOnly: true,
+};
 Object.assign(UNIT_TYPES, EXTRA_FISH_UNITS);
 UNIT_ORDER.push(...Object.keys(EXTRA_FISH_UNITS));
 
 function getRarityLabel(type) {
+  if (type.devOnly) {
+    return "개발자";
+  }
   if (type.vipOnly) {
     return "VIP";
   }
@@ -848,6 +902,21 @@ const ENEMY_BOSS_TYPES = {
     size: 60,
     color: "#4b4b56",
     accent: "#ff9b5c",
+    boss: true,
+  },
+  nyaongTitan: {
+    key: "nyaongTitan",
+    name: "냐옹타이탄",
+    hp: 1800,
+    damage: 110,
+    speed: 16,
+    attackRange: 260,
+    cooldown: 1.02,
+    reach: 124,
+    size: 144,
+    color: "#6f7582",
+    accent: "#ff5252",
+    projectile: true,
     boss: true,
   },
 };
@@ -1052,6 +1121,7 @@ function getUnitTagline(type) {
     vipDragonFish: "450 · 입에서 레이저를 쏘는 VIP 전용 신어",
     healSeahorse: "260 · 아군을 치료하는 지원가",
     bombPuffer: "190 · 1회용 자폭 폭탄어",
+    devNukeFish: "200 · 코드 전용 개발자 핵광선",
   };
   return taglines[type.key] || `${type.cost} · 물고기 출격`;
 }
@@ -1063,8 +1133,21 @@ function getRarityClass(rarity) {
     슈퍼레어: "super",
     전설: "legend",
     VIP: "vip",
+    개발자: "developer",
   };
   return map[rarity] || "common";
+}
+
+function getRarityAura(rarity) {
+  const auraMap = {
+    일반: { color: "rgba(210, 210, 210, 0.28)", shadow: "rgba(180, 180, 180, 0.28)" },
+    레어: { color: "rgba(84, 156, 255, 0.34)", shadow: "rgba(63, 131, 234, 0.32)" },
+    슈퍼레어: { color: "rgba(166, 105, 255, 0.36)", shadow: "rgba(131, 73, 218, 0.34)" },
+    전설: { color: "rgba(255, 188, 70, 0.38)", shadow: "rgba(235, 154, 47, 0.34)" },
+    VIP: { color: "rgba(255, 224, 107, 0.44)", shadow: "rgba(110, 201, 255, 0.36)" },
+    개발자: { color: "rgba(125, 255, 79, 0.48)", shadow: "rgba(116, 255, 69, 0.4)" },
+  };
+  return auraMap[rarity] || auraMap.일반;
 }
 
 function setGachaMessage(message, rarity = "") {
@@ -1219,7 +1302,8 @@ function performGacha() {
     return;
   }
   const pool = UNIT_ORDER.filter((key) => !DEFAULT_UNLOCKED_UNITS.includes(key) && !unlockedUnitKeys.includes(key));
-  if (pool.length === 0) {
+  const eligiblePool = pool.filter((key) => !UNIT_TYPES[key].codeOnly);
+  if (eligiblePool.length === 0) {
     setGachaMessage("모든 뽑기 유닛을 이미 해금했습니다.");
     return;
   }
@@ -1232,7 +1316,7 @@ function performGacha() {
   window.setTimeout(() => {
     billCount -= 1;
     saveBills();
-    const picked = pickWeightedUnit(pool);
+    const picked = pickWeightedUnit(eligiblePool);
     unlockedUnitKeys = [...unlockedUnitKeys, picked];
     saveUnlockedUnits();
     renderUnlockRoster();
@@ -1332,9 +1416,17 @@ function createInitialState() {
     bossesSpawned: 0,
     finalBossTimer: level.finalBossTime,
     finalBossSpawned: false,
+    openingBossesSpawned: false,
     baseLaserCooldown: 0,
     rewardGranted: false,
     dust: [],
+    cinematic: level.openingCinematic
+      ? {
+          key: level.openingCinematic,
+          timer: 4.2,
+          duration: 4.2,
+        }
+      : null,
   };
 }
 
@@ -1352,7 +1444,9 @@ function resetState() {
 function startGame() {
   resetState();
   state.mode = "playing";
-  state.message = `${LEVELS[selectedLevelKey].name} 시작! 코스트를 모아 라인을 밀어내세요.`;
+  state.message = state.cinematic
+    ? `${LEVELS[selectedLevelKey].name} 시작! 거대 합체 반응이 감지됩니다...`
+    : `${LEVELS[selectedLevelKey].name} 시작! 코스트를 모아 라인을 밀어내세요.`;
   setOverlay("", "", false);
   ui.launchScreen.classList.add("hidden");
   ensureMusic();
@@ -1382,7 +1476,7 @@ function selectLevel(levelKey) {
 
 function spawnPlayerUnit(typeKey) {
   const type = UNIT_TYPES[typeKey];
-  if (!type || state.mode !== "playing") {
+  if (!type || state.mode !== "playing" || state.cinematic) {
     return;
   }
 
@@ -1406,7 +1500,7 @@ function spawnPlayerUnit(typeKey) {
 }
 
 function upgradeIncome() {
-  if (state.mode !== "playing") {
+  if (state.mode !== "playing" || state.cinematic) {
     return;
   }
 
@@ -1480,7 +1574,12 @@ function spawnBoss() {
 }
 
 function spawnFinalBoss() {
-  const finalBossType = FINAL_BOSS_TYPES[LEVELS[state.selectedLevelKey].finalBoss];
+  const finalBossKey = LEVELS[state.selectedLevelKey].finalBoss;
+  if (!finalBossKey) {
+    state.finalBossSpawned = true;
+    return;
+  }
+  const finalBossType = FINAL_BOSS_TYPES[finalBossKey];
   const boss = createUnit(finalBossType, "enemy");
   state.enemyUnits.push(boss);
   state.finalBossSpawned = true;
@@ -1490,10 +1589,43 @@ function spawnFinalBoss() {
   triggerBossEntrance(boss);
 }
 
+function spawnOpeningBossWave() {
+  const level = LEVELS[state.selectedLevelKey];
+  if (!level.openingBosses || state.openingBossesSpawned) {
+    return;
+  }
+
+  const totalBosses = level.openingBossCount || level.openingBosses.length;
+  for (let index = 0; index < totalBosses; index += 1) {
+    const bossKey = level.openingBosses[index % level.openingBosses.length];
+    const type = ENEMY_BOSS_TYPES[bossKey] || FINAL_BOSS_TYPES[bossKey];
+    if (!type) {
+      continue;
+    }
+    const boss = createUnit(type, "enemy");
+    const column = index % 10;
+    const row = Math.floor(index / 10);
+    boss.x = WORLD.enemyBaseX - 74 - column * 46 - row * 8;
+    boss.y = WORLD.laneY - row * 5;
+    boss.attackTimer = 0.3 + index * 0.04;
+    state.enemyUnits.push(boss);
+    state.bossesSpawned += 1;
+  }
+  if (state.enemyUnits.length > 0) {
+    triggerBossEntrance(state.enemyUnits[state.enemyUnits.length - 1]);
+  }
+  musicStep = 0;
+  musicTimer = 0;
+  state.openingBossesSpawned = true;
+  state.message = `울트라 보스 출현! 냐옹타이탄 ${totalBosses}마리가 전장을 짓밟습니다.`;
+}
+
 function triggerBossEntrance(boss) {
   ensureMusic();
   playBossEntranceSting();
-  knockbackAllUnits(boss);
+  if (state.selectedLevelKey !== "titanInvasion") {
+    knockbackAllUnits(boss);
+  }
   state.dust.push({
     x: boss.x - 70,
     y: boss.y - 30,
@@ -1530,6 +1662,17 @@ function update(dt) {
     return;
   }
 
+  if (state.cinematic) {
+    state.cinematic.timer = Math.max(0, state.cinematic.timer - dt);
+    tickMusic(dt);
+    if (state.cinematic.timer <= 0) {
+      state.cinematic = null;
+      spawnOpeningBossWave();
+    }
+    syncHud();
+    return;
+  }
+
   state.elapsed += dt;
   state.cost = Math.min(state.maxCost, state.cost + state.income * dt);
 
@@ -1555,7 +1698,7 @@ function update(dt) {
     state.bossSpawnTimer = LEVELS[state.selectedLevelKey].bossSpawnStart + state.bossesSpawned * LEVELS[state.selectedLevelKey].bossSpawnStep;
   }
 
-  if (!state.finalBossSpawned) {
+  if (!state.finalBossSpawned && LEVELS[state.selectedLevelKey].finalBossTime != null) {
     state.finalBossTimer -= dt;
     if (state.finalBossTimer <= 0) {
       spawnFinalBoss();
@@ -1862,15 +2005,19 @@ function syncHud() {
   ui.statusText.textContent = state.message;
   ui.upgradeCostText.textContent = `${state.incomeUpgradeCost}`;
   ui.baseLaserBtn.textContent = state.baseLaserCooldown > 0 ? `E. 레이저 ${Math.ceil(state.baseLaserCooldown)}s` : "E. 베이스 레이저";
-  ui.baseLaserBtn.classList.toggle("disabled", state.baseLaserCooldown > 0 || state.mode !== "playing");
+  ui.baseLaserBtn.classList.toggle("disabled", state.baseLaserCooldown > 0 || state.mode !== "playing" || Boolean(state.cinematic));
 
   for (const btn of ui.unitButtons) {
     const type = UNIT_TYPES[btn.dataset.unit];
-    const available = state.cost >= type.cost && state.spawnCooldowns[type.key] <= 0 && state.mode === "playing";
+    const available =
+      state.cost >= type.cost &&
+      state.spawnCooldowns[type.key] <= 0 &&
+      state.mode === "playing" &&
+      !state.cinematic;
     btn.classList.toggle("disabled", !available);
   }
 
-  const canUpgrade = state.cost >= state.incomeUpgradeCost && state.mode === "playing";
+  const canUpgrade = state.cost >= state.incomeUpgradeCost && state.mode === "playing" && !state.cinematic;
   ui.upgradeBtn.classList.toggle("disabled", !canUpgrade);
 }
 
@@ -2102,6 +2249,52 @@ function getFishSprite(unit) {
     return fishImageCache.get(cacheKey);
   }
 
+  if (unit.type === "devNukeFish") {
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+        <defs>
+          <linearGradient id="bombBody" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1b1b20"/>
+            <stop offset="58%" stop-color="#40434d"/>
+            <stop offset="100%" stop-color="#101015"/>
+          </linearGradient>
+          <linearGradient id="bombMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a4ff88"/>
+            <stop offset="100%" stop-color="#59c931"/>
+          </linearGradient>
+          <radialGradient id="bombGlow" cx="50%" cy="46%" r="60%">
+            <stop offset="0%" stop-color="rgba(145,255,79,0.88)"/>
+            <stop offset="100%" stop-color="rgba(145,255,79,0)"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="120" cy="130" rx="74" ry="12" fill="rgba(0,0,0,0.18)"/>
+        <ellipse cx="118" cy="74" rx="84" ry="48" fill="url(#bombGlow)"/>
+        <path d="M68 86 C52 64, 60 32, 102 22 L170 18 Q212 46 200 80 Q192 112 154 120 L90 118 Q62 108 68 86 Z" fill="url(#bombBody)" stroke="${unit.outline}" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M166 22 L196 18 Q220 46 208 72 L180 74 Q186 48 166 22 Z" fill="url(#bombMetal)" stroke="${unit.outline}" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M86 18 Q78 2 90 2 Q100 4 102 20" fill="none" stroke="${unit.outline}" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="82" cy="14" r="8" fill="#ffb347" stroke="${unit.outline}" stroke-width="4"/>
+        <path d="M74 14 Q60 6 50 18" fill="none" stroke="#ffdd72" stroke-width="4" stroke-linecap="round"/>
+        <path d="M74 14 Q58 18 56 34" fill="none" stroke="#fff0a8" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="116" cy="60" r="20" fill="#ffffff" stroke="${unit.outline}" stroke-width="5"/>
+        <circle cx="152" cy="68" r="18" fill="#ffffff" stroke="${unit.outline}" stroke-width="5"/>
+        <circle cx="122" cy="64" r="9" fill="#1b1b20"/>
+        <circle cx="157" cy="72" r="8" fill="#1b1b20"/>
+        <circle cx="118" cy="58" r="4" fill="#ffffff"/>
+        <circle cx="153" cy="66" r="3.5" fill="#ffffff"/>
+        <path d="M112 100 Q136 110 162 96" fill="none" stroke="#96ff74" stroke-width="6" stroke-linecap="round"/>
+        <path d="M96 92 Q124 84 150 92" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M84 104 Q114 116 150 112" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    `;
+
+    const image = new Image();
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    fishImageCache.set(cacheKey, image);
+    return image;
+  }
+
+  const profile = getFishArtProfile(unit.type);
+
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 120">
       <defs>
@@ -2113,19 +2306,22 @@ function getFishSprite(unit) {
           <stop offset="0%" stop-color="${unit.accent}"/>
           <stop offset="100%" stop-color="${unit.outline}"/>
         </linearGradient>
+        <radialGradient id="shine" cx="62%" cy="32%" r="42%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
       </defs>
       <ellipse cx="112" cy="104" rx="58" ry="10" fill="rgba(0,0,0,0.12)"/>
-      <path d="M36 61 C16 36, 16 18, 46 16 C58 8, 76 6, 95 10 C136 3, 181 20, 194 47 C206 72, 177 99, 130 102 C95 113, 56 104, 42 90 C18 90, 16 76, 36 61Z" fill="url(#body)" stroke="${unit.outline}" stroke-width="5" stroke-linejoin="round"/>
-      <path d="M28 60 L6 35 L14 60 L6 86 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="5" stroke-linejoin="round"/>
-      <path d="M94 20 L112 2 L124 26 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M86 92 L104 114 L118 90 Z" fill="url(#fin)" stroke="${unit.outline}" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M138 34 C158 30, 176 40, 182 54 C171 50, 158 51, 143 58 Z" fill="#ffffff" fill-opacity="0.28"/>
-      <circle cx="162" cy="52" r="9" fill="#ffffff"/>
-      <circle cx="165" cy="52" r="4.6" fill="${unit.outline}"/>
-      <path d="M175 61 Q186 65 194 59" stroke="${unit.outline}" stroke-width="4" stroke-linecap="round" fill="none"/>
-      <path d="M96 28 Q125 46 98 72" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3"/>
-      <path d="M68 34 Q94 52 68 82" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
-      <path d="M46 42 Q70 56 48 76" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="3"/>
+      <path d="${profile.body}" fill="url(#body)" stroke="${unit.outline}" stroke-width="${profile.stroke}" stroke-linejoin="round"/>
+      <path d="${profile.tail}" fill="url(#fin)" stroke="${unit.outline}" stroke-width="${profile.stroke}" stroke-linejoin="round"/>
+      <path d="${profile.topFin}" fill="url(#fin)" stroke="${unit.outline}" stroke-width="${Math.max(3, profile.stroke - 1)}" stroke-linejoin="round"/>
+      <path d="${profile.bottomFin}" fill="url(#fin)" stroke="${unit.outline}" stroke-width="${Math.max(3, profile.stroke - 1)}" stroke-linejoin="round"/>
+      ${profile.extra}
+      <ellipse cx="${profile.shineX}" cy="${profile.shineY}" rx="${profile.shineW}" ry="${profile.shineH}" fill="url(#shine)"/>
+      <circle cx="${profile.eyeX}" cy="${profile.eyeY}" r="${profile.eyeR}" fill="#ffffff"/>
+      <circle cx="${profile.eyeX + 3}" cy="${profile.eyeY}" r="${Math.max(3, profile.eyeR * 0.5)}" fill="${unit.outline}"/>
+      <path d="${profile.mouth}" stroke="${unit.outline}" stroke-width="4" stroke-linecap="round" fill="none"/>
+      ${profile.patterns.map((pattern) => `<path d="${pattern}" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="3"/>`).join("")}
     </svg>
   `;
 
@@ -2135,7 +2331,247 @@ function getFishSprite(unit) {
   return image;
 }
 
+function getFishArtProfile(type) {
+  const profiles = {
+    puffer: {
+      body: "M54 61 C42 28, 67 12, 98 12 C150 10, 190 34, 190 61 C190 88, 150 112, 98 110 C67 110, 42 94, 54 61Z",
+      tail: "M56 60 L22 34 L32 60 L22 86 Z",
+      topFin: "M98 18 L112 2 L126 20 Z",
+      bottomFin: "M96 102 L114 118 L126 96 Z",
+      mouth: "M182 63 Q194 64 200 58",
+      patterns: ["M74 34 Q102 56 74 84", "M104 28 Q130 56 104 88"],
+      extra: "",
+      eyeX: 156, eyeY: 52, eyeR: 10, shineX: 136, shineY: 34, shineW: 36, shineH: 18, stroke: 5,
+    },
+    catfish: {
+      body: "M42 62 C34 34, 58 18, 90 16 C132 10, 186 28, 196 58 C204 84, 170 102, 118 106 C72 108, 44 94, 42 62Z",
+      tail: "M42 62 L10 30 L18 62 L10 92 Z",
+      topFin: "M102 22 L124 6 L132 28 Z",
+      bottomFin: "M90 94 L110 114 L126 92 Z",
+      mouth: "M183 66 Q193 68 198 61",
+      patterns: ["M70 36 Q98 52 72 80", "M104 30 Q132 50 108 84"],
+      extra: `<path d="M178 66 Q198 82 200 92" stroke="${UNIT_TYPES.tank?.outline || "#342118"}" stroke-width="4" fill="none"/><path d="M176 62 Q198 48 200 36" stroke="${UNIT_TYPES.tank?.outline || "#342118"}" stroke-width="4" fill="none"/>`,
+      eyeX: 154, eyeY: 50, eyeR: 9, shineX: 126, shineY: 36, shineW: 34, shineH: 16, stroke: 5,
+    },
+    swordfish: {
+      body: "M34 62 C22 36, 58 18, 104 16 C150 12, 186 30, 194 56 C200 78, 166 98, 118 102 C70 106, 40 92, 34 62Z",
+      tail: "M36 62 L8 38 L16 62 L8 86 Z",
+      topFin: "M108 22 L126 2 L136 24 Z",
+      bottomFin: "M94 96 L114 114 L126 92 Z",
+      mouth: "M192 58 L214 52",
+      patterns: ["M68 36 Q94 50 70 80", "M108 30 Q134 48 112 84"],
+      extra: `<path d="M188 56 L216 46" stroke="${"#342118"}" stroke-width="6" stroke-linecap="round"/>`,
+      eyeX: 156, eyeY: 48, eyeR: 8, shineX: 128, shineY: 32, shineW: 30, shineH: 14, stroke: 4,
+    },
+    ray: {
+      body: "M46 62 C64 18, 152 18, 176 58 C156 96, 72 100, 46 62Z",
+      tail: "M46 62 L18 56 L30 64 L18 72 Z",
+      topFin: "M92 24 L114 6 L132 26 Z",
+      bottomFin: "M92 98 L114 116 L132 96 Z",
+      mouth: "M170 63 Q182 66 188 60",
+      patterns: ["M76 42 Q114 58 80 76", "M110 38 Q144 54 112 78"],
+      extra: `<path d="M176 60 Q198 88 204 112" stroke="${"#342118"}" stroke-width="4" fill="none"/>`,
+      eyeX: 154, eyeY: 50, eyeR: 8, shineX: 126, shineY: 34, shineW: 42, shineH: 16, stroke: 4,
+    },
+    whale: {
+      body: "M40 62 C30 30, 68 12, 122 12 C176 12, 206 36, 204 62 C202 90, 168 108, 114 108 C70 108, 42 90, 40 62Z",
+      tail: "M40 62 L8 28 L14 62 L8 96 Z",
+      topFin: "M118 24 L138 8 L148 30 Z",
+      bottomFin: "M104 100 L126 118 L140 98 Z",
+      mouth: "M186 68 Q198 72 202 64",
+      patterns: ["M82 34 Q120 56 86 86", "M126 28 Q156 50 130 86"],
+      extra: "",
+      eyeX: 166, eyeY: 50, eyeR: 10, shineX: 142, shineY: 34, shineW: 38, shineH: 18, stroke: 5,
+    },
+    shark: {
+      body: "M34 62 C28 34, 64 16, 114 14 C154 12, 194 30, 198 58 C202 86, 164 102, 114 104 C64 104, 36 88, 34 62Z",
+      tail: "M34 62 L6 38 L14 62 L6 88 Z",
+      topFin: "M112 18 L132 0 L142 24 Z",
+      bottomFin: "M98 96 L116 112 L128 94 Z",
+      mouth: "M184 66 Q194 70 198 62",
+      patterns: ["M68 34 Q98 52 72 82", "M110 28 Q138 48 114 84"],
+      extra: "",
+      eyeX: 160, eyeY: 48, eyeR: 8, shineX: 132, shineY: 32, shineW: 32, shineH: 14, stroke: 5,
+    },
+    eel: {
+      body: "M26 66 C34 28, 82 18, 128 20 C168 22, 196 40, 196 56 C196 76, 172 96, 126 100 C82 104, 42 94, 26 66Z",
+      tail: "M26 66 L8 46 L12 66 L8 86 Z",
+      topFin: "M108 30 L122 10 L132 32 Z",
+      bottomFin: "M96 98 L112 116 L122 96 Z",
+      mouth: "M184 60 Q194 64 198 58",
+      patterns: ["M62 40 Q102 58 66 84", "M100 34 Q138 52 106 86"],
+      extra: "",
+      eyeX: 158, eyeY: 50, eyeR: 7, shineX: 124, shineY: 34, shineW: 30, shineH: 12, stroke: 4,
+    },
+    seahorse: {
+      body: "M86 22 C114 14, 150 28, 154 54 C156 68, 146 80, 130 86 C138 102, 126 112, 110 104 C98 96, 90 78, 86 60 C72 54, 66 40, 70 30 C74 22, 80 20, 86 22Z",
+      tail: "M108 98 Q136 116 118 118 Q98 116 108 98 Z",
+      topFin: "M98 18 L112 2 L118 20 Z",
+      bottomFin: "M80 72 L62 88 L84 86 Z",
+      mouth: "M150 48 Q164 46 172 38",
+      patterns: ["M90 34 Q118 48 94 72"],
+      extra: `<path d="M102 90 Q122 104 110 112" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3"/>`,
+      eyeX: 132, eyeY: 42, eyeR: 7, shineX: 118, shineY: 30, shineW: 24, shineH: 12, stroke: 4,
+    },
+    koi: {
+      body: "M34 62 C26 34, 62 16, 106 14 C150 12, 190 30, 196 58 C202 86, 168 104, 118 106 C70 108, 38 92, 34 62Z",
+      tail: "M34 62 L6 36 L14 62 L6 88 Z",
+      topFin: "M104 20 L124 2 L134 24 Z",
+      bottomFin: "M92 98 L112 116 L124 96 Z",
+      mouth: "M184 62 Q194 64 200 58",
+      patterns: ["M72 34 Q96 50 70 82", "M116 30 Q136 50 112 84", "M90 26 Q116 44 88 92"],
+      extra: "",
+      eyeX: 160, eyeY: 48, eyeR: 8, shineX: 132, shineY: 32, shineW: 30, shineH: 14, stroke: 4,
+    },
+    default: {
+      body: "M36 61 C16 36, 16 18, 46 16 C58 8, 76 6, 95 10 C136 3, 181 20, 194 47 C206 72, 177 99, 130 102 C95 113, 56 104, 42 90 C18 90, 16 76, 36 61Z",
+      tail: "M28 60 L6 35 L14 60 L6 86 Z",
+      topFin: "M94 20 L112 2 L124 26 Z",
+      bottomFin: "M86 92 L104 114 L118 90 Z",
+      mouth: "M175 61 Q186 65 194 59",
+      patterns: ["M96 28 Q125 46 98 72", "M68 34 Q94 52 68 82", "M46 42 Q70 56 48 76"],
+      extra: "",
+      eyeX: 162, eyeY: 52, eyeR: 9, shineX: 138, shineY: 34, shineW: 34, shineH: 16, stroke: 5,
+    },
+  };
+
+  const explicitProfiles = {
+    miniTank: "puffer",
+    bombPuffer: "puffer",
+    tank: "catfish",
+    emeraldCod: "catfish",
+    sword: "swordfish",
+    sniper: "swordfish",
+    blazeMarlin: "swordfish",
+    starSwordfish: "swordfish",
+    guard: "ray",
+    bubbleRay: "ray",
+    mistRay: "ray",
+    azureManta: "ray",
+    giant: "whale",
+    reefWhale: "whale",
+    battle: "shark",
+    hammer: "shark",
+    saberShark: "shark",
+    vipDragonFish: "shark",
+    laser: "eel",
+    deepSeer: "eel",
+    shadowEel: "eel",
+    healSeahorse: "seahorse",
+    angel: "koi",
+    poisonKoi: "koi",
+    prismKoi: "koi",
+    gearCarp: "koi",
+    guardianKoi: "koi",
+  };
+
+  if (explicitProfiles[type]) {
+    return profiles[explicitProfiles[type]];
+  }
+  if (type.includes("puffer")) return profiles.puffer;
+  if (type.includes("tank") || type.includes("catfish") || type.includes("cod")) return profiles.catfish;
+  if (type.includes("sword") || type.includes("marlin") || type.includes("sniper")) return profiles.swordfish;
+  if (type.includes("ray") || type.includes("manta")) return profiles.ray;
+  if (type.includes("whale")) return profiles.whale;
+  if (type.includes("shark")) return profiles.shark;
+  if (type.includes("eel") || type.includes("seer")) return profiles.eel;
+  if (type.includes("seahorse")) return profiles.seahorse;
+  if (type.includes("koi") || type.includes("carp")) return profiles.koi;
+  return profiles.default;
+}
+
 function drawFallbackFish(unit) {
+  if (unit.type === "devNukeFish") {
+    ctx.scale(unit.dir, 1);
+    ctx.fillStyle = "rgba(43, 26, 18, 0.18)";
+    ctx.beginPath();
+    ctx.ellipse(0, unit.size * 0.7, unit.size * 0.96, unit.size * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const bombGradient = ctx.createLinearGradient(-unit.size * 0.95, -unit.size * 0.8, unit.size * 1.05, unit.size * 0.8);
+    bombGradient.addColorStop(0, "#141418");
+    bombGradient.addColorStop(0.6, "#40434d");
+    bombGradient.addColorStop(1, "#09090c");
+    ctx.fillStyle = bombGradient;
+    ctx.strokeStyle = unit.outline;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.75, unit.size * 0.15);
+    ctx.quadraticCurveTo(-unit.size * 1.02, -unit.size * 0.3, -unit.size * 0.28, -unit.size * 0.72);
+    ctx.lineTo(unit.size * 0.52, -unit.size * 0.76);
+    ctx.quadraticCurveTo(unit.size * 1.04, -unit.size * 0.36, unit.size * 0.94, unit.size * 0.06);
+    ctx.quadraticCurveTo(unit.size * 0.84, unit.size * 0.72, unit.size * 0.18, unit.size * 0.78);
+    ctx.lineTo(-unit.size * 0.4, unit.size * 0.72);
+    ctx.quadraticCurveTo(-unit.size * 0.76, unit.size * 0.58, -unit.size * 0.75, unit.size * 0.15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    const capGradient = ctx.createLinearGradient(unit.size * 0.28, -unit.size * 0.76, unit.size * 1.14, -unit.size * 0.02);
+    capGradient.addColorStop(0, "#aaff86");
+    capGradient.addColorStop(1, "#5dcb34");
+    ctx.fillStyle = capGradient;
+    ctx.beginPath();
+    ctx.moveTo(unit.size * 0.34, -unit.size * 0.74);
+    ctx.lineTo(unit.size * 0.86, -unit.size * 0.8);
+    ctx.quadraticCurveTo(unit.size * 1.16, -unit.size * 0.36, unit.size * 0.98, -unit.size * 0.06);
+    ctx.lineTo(unit.size * 0.54, -unit.size * 0.02);
+    ctx.quadraticCurveTo(unit.size * 0.66, -unit.size * 0.42, unit.size * 0.34, -unit.size * 0.74);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.36, -unit.size * 0.8);
+    ctx.quadraticCurveTo(-unit.size * 0.5, -unit.size * 1.14, -unit.size * 0.26, -unit.size * 1.1);
+    ctx.quadraticCurveTo(-unit.size * 0.08, -unit.size * 1.04, -unit.size * 0.06, -unit.size * 0.74);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffb347";
+    ctx.beginPath();
+    ctx.arc(-unit.size * 0.44, -unit.size * 0.88, unit.size * 0.11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#ffe27a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.54, -unit.size * 0.92);
+    ctx.lineTo(-unit.size * 0.8, -unit.size * 1.08);
+    ctx.moveTo(-unit.size * 0.58, -unit.size * 0.82);
+    ctx.lineTo(-unit.size * 0.86, -unit.size * 0.72);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(-unit.size * 0.04, -unit.size * 0.18, unit.size * 0.24, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.42, -unit.size * 0.06, unit.size * 0.21, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = unit.outline;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.fillStyle = "#111217";
+    ctx.beginPath();
+    ctx.arc(unit.size * 0.02, -unit.size * 0.12, unit.size * 0.1, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.46, -unit.size * 0.02, unit.size * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(unit.size * 0.06, -unit.size * 0.18, unit.size * 0.04, 0, Math.PI * 2);
+    ctx.arc(unit.size * 0.5, -unit.size * 0.08, unit.size * 0.035, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#96ff74";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-unit.size * 0.06, unit.size * 0.38);
+    ctx.quadraticCurveTo(unit.size * 0.24, unit.size * 0.54, unit.size * 0.56, unit.size * 0.32);
+    ctx.stroke();
+    return;
+  }
+
   ctx.scale(unit.dir, 1);
   ctx.strokeStyle = unit.outline;
   ctx.lineWidth = 3.5;
@@ -2178,13 +2614,24 @@ function drawUnit(unit) {
 
   const bounce = Math.sin(unit.bob) * 3;
   const y = unit.y + bounce;
+  const aura = getRarityAura(unit.rarity);
   ctx.save();
   ctx.translate(unit.x, y);
+
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = aura.color;
+  ctx.beginPath();
+  ctx.ellipse(0, unit.size * 0.58, unit.size * 1.1, unit.size * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   const sprite = getFishSprite(unit);
   if (sprite.complete) {
     ctx.save();
     ctx.scale(unit.dir, 1);
+    ctx.shadowColor = aura.shadow;
+    ctx.shadowBlur = unit.rarity === "VIP" ? 28 : unit.rarity === "전설" ? 22 : 14;
     ctx.fillStyle = "rgba(43, 26, 18, 0.12)";
     ctx.beginPath();
     ctx.ellipse(0, unit.size * 0.56, unit.size * 0.96, unit.size * 0.22, 0, 0, Math.PI * 2);
@@ -2295,6 +2742,8 @@ function drawEnemyObject(unit) {
     ctx.fillStyle = unit.accent;
     ctx.fillRect(-unit.size * 0.14, -unit.size * 0.7, unit.size * 0.28, unit.size * 0.08);
     ctx.fillRect(-unit.size * 0.08, -unit.size * 0.18, unit.size * 0.16, unit.size * 0.08);
+  } else if (unit.boss && unit.type === "nyaongTitan") {
+    drawNyaongTitanBody(unit);
   } else if (unit.boss && unit.type === "fridgeBoss") {
     ctx.fillStyle = unit.color;
     roundedRectPath(-unit.size * 0.52, -unit.size * 1.18, unit.size * 1.04, unit.size * 1.3, 12);
@@ -2486,6 +2935,110 @@ function drawEnemyObject(unit) {
   drawUnitName(unit, y - unit.size * 1.58);
 }
 
+function drawNyaongTitanBody(unit) {
+  ctx.fillStyle = "#515764";
+  roundedRectPath(-unit.size * 0.5, -unit.size * 0.84, unit.size * 1, unit.size * 0.9, 24);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#7f8898";
+  roundedRectPath(-unit.size * 0.28, -unit.size * 1.02, unit.size * 0.56, unit.size * 0.14, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#2b313c";
+  ctx.fillRect(-unit.size * 0.12, -unit.size * 0.97, unit.size * 0.24, unit.size * 0.06);
+  ctx.strokeRect(-unit.size * 0.12, -unit.size * 0.97, unit.size * 0.24, unit.size * 0.06);
+  ctx.fillStyle = unit.accent;
+  ctx.beginPath();
+  ctx.arc(-unit.size * 0.06, -unit.size * 0.94, unit.size * 0.025, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.06, -unit.size * 0.94, unit.size * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#697181";
+  roundedRectPath(-unit.size * 0.72, -unit.size * 0.78, unit.size * 0.2, unit.size * 0.62, 12);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(unit.size * 0.52, -unit.size * 0.78, unit.size * 0.2, unit.size * 0.62, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.2, 0);
+  ctx.lineTo(-unit.size * 0.36, unit.size * 0.82);
+  ctx.lineTo(-unit.size * 0.07, unit.size * 0.82);
+  ctx.lineTo(unit.size * 0.02, unit.size * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.2, 0);
+  ctx.lineTo(unit.size * 0.36, unit.size * 0.82);
+  ctx.lineTo(unit.size * 0.07, unit.size * 0.82);
+  ctx.lineTo(-unit.size * 0.02, unit.size * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#fff7f2";
+  ctx.beginPath();
+  ctx.arc(0, -unit.size * 1.34, unit.size * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.14, -unit.size * 1.45);
+  ctx.lineTo(-unit.size * 0.04, -unit.size * 1.65);
+  ctx.lineTo(unit.size * 0.02, -unit.size * 1.44);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(unit.size * 0.14, -unit.size * 1.45);
+  ctx.lineTo(unit.size * 0.04, -unit.size * 1.65);
+  ctx.lineTo(-unit.size * 0.02, -unit.size * 1.44);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  roundedRectPath(-unit.size * 0.12, -unit.size * 1.14, unit.size * 0.24, unit.size * 0.28, 10);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(-unit.size * 0.18, -unit.size * 0.92, unit.size * 0.09, unit.size * 0.16, 7);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(unit.size * 0.09, -unit.size * 0.92, unit.size * 0.09, unit.size * 0.16, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#111318";
+  ctx.beginPath();
+  ctx.arc(-unit.size * 0.06, -unit.size * 1.36, unit.size * 0.035, 0, Math.PI * 2);
+  ctx.arc(unit.size * 0.06, -unit.size * 1.36, unit.size * 0.035, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#111318";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.08, -unit.size * 1.23);
+  ctx.quadraticCurveTo(0, -unit.size * 1.16, unit.size * 0.08, -unit.size * 1.23);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#241719";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-unit.size * 0.14, -unit.size * 1.34);
+  ctx.lineTo(-unit.size * 0.28, -unit.size * 1.31);
+  ctx.moveTo(unit.size * 0.14, -unit.size * 1.34);
+  ctx.lineTo(unit.size * 0.28, -unit.size * 1.31);
+  ctx.stroke();
+
+  ctx.fillStyle = unit.accent;
+  ctx.fillRect(-unit.size * 0.16, -unit.size * 0.62, unit.size * 0.32, unit.size * 0.08);
+  ctx.fillRect(-unit.size * 0.12, -unit.size * 0.3, unit.size * 0.24, unit.size * 0.08);
+}
+
 function drawEnemyCat(unit) {
   const bounce = Math.sin(unit.bob) * 2.5;
   const y = unit.y + bounce;
@@ -2622,13 +3175,6 @@ function drawBaseLaserBeams() {
 }
 
 function drawDust() {
-  for (const puff of state.dust) {
-    ctx.globalAlpha = Math.max(0, puff.life * 2.3);
-    ctx.fillStyle = puff.color;
-    ctx.beginPath();
-    ctx.arc(puff.x, puff.y, puff.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
   ctx.globalAlpha = 1;
 }
 
@@ -2703,6 +3249,136 @@ function drawBackground() {
   }
 }
 
+function drawCinematicCatFigure(x, y, scale = 1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = "#fff7f0";
+  ctx.strokeStyle = "#241719";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(0, -50, 54, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-34, -80);
+  ctx.lineTo(-12, -118);
+  ctx.lineTo(-2, -74);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(34, -80);
+  ctx.lineTo(12, -118);
+  ctx.lineTo(2, -74);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#111318";
+  ctx.beginPath();
+  ctx.arc(-16, -54, 8, 0, Math.PI * 2);
+  ctx.arc(16, -54, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-10, -30);
+  ctx.quadraticCurveTo(0, -22, 10, -30);
+  ctx.stroke();
+  ctx.fillStyle = "#fff7f0";
+  roundedRectPath(-32, -2, 64, 70, 18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCinematicRobotFigure(x, y, scale = 1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = "#6e7789";
+  ctx.strokeStyle = "#241719";
+  ctx.lineWidth = 6;
+  roundedRectPath(-58, -144, 116, 126, 22);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(-34, -198, 68, 56, 16);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(-96, -122, 28, 88, 12);
+  ctx.fill();
+  ctx.stroke();
+  roundedRectPath(68, -122, 28, 88, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-24, -16);
+  ctx.lineTo(-42, 118);
+  ctx.lineTo(-8, 118);
+  ctx.lineTo(0, 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(24, -16);
+  ctx.lineTo(42, 118);
+  ctx.lineTo(8, 118);
+  ctx.lineTo(0, 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ff5252";
+  ctx.fillRect(-18, -182, 36, 14);
+  ctx.fillRect(-16, -86, 32, 12);
+  ctx.restore();
+}
+
+function drawTitanMergeCinematic(cinematic) {
+  const progress = 1 - cinematic.timer / cinematic.duration;
+  const catX = 320 + Math.min(1, progress * 1.35) * 250;
+  const robotX = 990 - Math.min(1, progress * 1.22) * 310;
+  const flash = Math.max(0, 1 - Math.abs(progress - 0.54) / 0.18);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(12, 10, 22, 0.52)";
+  ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+  ctx.fillStyle = "#fff5db";
+  ctx.font = '46px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+  ctx.fillText("고양이 타이탄 침입", WORLD.width / 2 - 200, 110);
+  ctx.font = '24px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+  ctx.fillStyle = "#ffd76a";
+  ctx.fillText("고양이와 거대 로봇이 합체하고 있습니다!", WORLD.width / 2 - 255, 150);
+
+  if (progress < 0.6) {
+    drawCinematicCatFigure(catX, 430, 1 + flash * 0.08);
+    drawCinematicRobotFigure(robotX, 446, 1 + flash * 0.05);
+  }
+
+  if (flash > 0.02) {
+    const burst = ctx.createRadialGradient(WORLD.width / 2, 350, 20, WORLD.width / 2, 350, 250);
+    burst.addColorStop(0, `rgba(255,255,255,${0.92 * flash})`);
+    burst.addColorStop(0.35, `rgba(255,116,84,${0.64 * flash})`);
+    burst.addColorStop(1, "rgba(255,116,84,0)");
+    ctx.fillStyle = burst;
+    ctx.beginPath();
+    ctx.arc(WORLD.width / 2, 350, 250, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (progress >= 0.45) {
+    const cinematicUnit = createUnit(ENEMY_BOSS_TYPES.nyaongTitan, "enemy");
+    cinematicUnit.x = WORLD.width / 2 + 24;
+    cinematicUnit.y = WORLD.laneY;
+    cinematicUnit.bob = 0;
+    cinematicUnit.attackTimer = 0;
+    drawEnemyObject(cinematicUnit);
+  }
+
+  ctx.fillStyle = "#fffaf0";
+  ctx.font = '28px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+  ctx.fillText(progress < 0.55 ? "합체 준비" : "냐옹타이탄 강림", WORLD.width / 2 - 85, WORLD.height - 118);
+  ctx.restore();
+}
+
 function render() {
   drawBackground();
   drawBase(WORLD.playerBaseX, "player", state.playerBase.hp / state.playerBase.maxHp);
@@ -2718,6 +3394,10 @@ function render() {
   }
   drawDust();
 
+  if (state.cinematic && state.cinematic.key === "catTitanMerge") {
+    drawTitanMergeCinematic(state.cinematic);
+  }
+
   ctx.fillStyle = "#2b1b16";
   ctx.font = '24px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
   ctx.fillText(`Wave ${state.enemyWave}`, WORLD.width / 2 - 44, 54);
@@ -2726,14 +3406,18 @@ function render() {
     ctx.font = '18px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
     ctx.fillText(`Boss ${state.bossesSpawned}`, WORLD.width / 2 - 32, 82);
   }
-  if (!state.finalBossSpawned) {
+  if (!LEVELS[state.selectedLevelKey].hideFinalBossTimer && !state.finalBossSpawned) {
     ctx.fillStyle = "#4b2330";
     ctx.font = '16px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
     ctx.fillText(`Final Boss in ${Math.max(0, Math.ceil(state.finalBossTimer))}s`, WORLD.width / 2 - 62, 108);
-  } else {
+  } else if (!LEVELS[state.selectedLevelKey].hideFinalBossTimer) {
     ctx.fillStyle = "#b3122f";
     ctx.font = '18px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
     ctx.fillText("Final Boss: titan human", WORLD.width / 2 - 88, 108);
+  } else if (state.selectedLevelKey === "titanInvasion") {
+    ctx.fillStyle = "#b3122f";
+    ctx.font = '18px "Arial Rounded MT Bold", "Trebuchet MS", sans-serif';
+    ctx.fillText("Ultra Boss: 냐옹타이탄 x3", WORLD.width / 2 - 108, 108);
   }
 }
 
@@ -2779,7 +3463,7 @@ function handleKey(event) {
 }
 
 function fireBaseLaser() {
-  if (state.mode !== "playing") {
+  if (state.mode !== "playing" || state.cinematic) {
     return;
   }
   if (state.baseLaserCooldown > 0) {
@@ -2868,6 +3552,7 @@ if (ui.codeResult) {
 window.render_game_to_text = () =>
   JSON.stringify({
     mode: state.mode,
+    cinematic: state.cinematic ? { key: state.cinematic.key, secondsLeft: Number(state.cinematic.timer.toFixed(2)) } : null,
     coordinateSystem: "origin top-left, x rightward, y downward",
     resources: {
       cost: Math.floor(state.cost),
